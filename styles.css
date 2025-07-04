@@ -1,0 +1,810 @@
+/* filepath: c:\Users\Liyander\Downloads\Red Vault\styles.css */
+body {
+    margin: 0;
+    background: #141416;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', 'Fira Mono', 'Consolas', 'Menlo', monospace;
+}
+
+/* Remove margin/padding from html and body */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    min-height: 100%;
+    background: #141416;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', 'Fira Mono', 'Consolas', 'Menlo', monospace;
+}
+
+html, body, .container, .sidebar, .main-content {
+    scroll-behavior: smooth;
+}
+
+.container {
+    display: block; /* Not flex, since sidebar is fixed */
+    margin-top: 64px;
+    width: 100vw;
+    height: calc(100vh - 64px);
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent double scrollbars */
+}
+
+/* Fixed navbar at the very top, full width */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; /* Fix: use 100% instead of 100vw */
+    height: 70px;
+    background: #18181c;
+    color: #e53935;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2.5rem;
+    box-shadow: 0 2px 12px #000a;
+    border-bottom: 1.5px solid #e53935;
+    z-index: 1000;
+    box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.navbar-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px #e5393530;
+}
+
+.navbar-links {
+    list-style: none;
+    display: flex;
+    gap: 2.2rem;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-links a {
+    color: #e0e0e0;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.08rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 3px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.navbar-links a:hover {
+    background: #e53935;
+    color: #fff;
+    box-shadow: 0 0 8px #e5393530;
+}
+
+.navbar-links a.active,
+.navbar-links a[aria-current="page"] {
+    color: #e53935;
+    font-weight: 700;
+    text-shadow: 0 2px 8px #e5393530;
+    border-bottom: 2px solid #e53935;
+    background: transparent;
+}
+
+/* Ensure container starts below navbar */
+.container {
+    display: block; /* Not flex, since sidebar is fixed */
+    margin-top: 64px;
+    width: 100vw;
+    height: calc(100vh - 64px);
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent double scrollbars */
+}
+
+/* Fixed sidebar */
+.sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 220px;
+    height: calc(100vh - 64px); /* Match container height */
+    background: #18181c;
+    padding-top: 2.5rem;
+    box-shadow: 2px 0 12px #000a;
+    border-right: 1.5px solid #e53935;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    z-index: 999;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.sidebar li {
+    margin-bottom: 1.2rem;
+    width: 100%;
+}
+
+.sidebar a {
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 1.08rem;
+    padding: 0.7rem 2rem;
+    display: block;
+    border-radius: 4px 0 0 4px;
+    font-family: inherit;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.sidebar a:hover, .sidebar a.active {
+    background: #e53935;
+    color: #fff;
+    box-shadow: 2px 0 10px #e5393530;
+}
+
+/* Main content scrolls independently */
+.main-content {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    position: relative;
+    gap: 2.5rem;
+    margin-left: 220px; /* width of sidebar */
+    height: calc(100vh - 64px);
+    padding: 2.5rem 3rem;
+    background: #141416;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+.main-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* Remove min-height from markdown-body to prevent overflow issues */
+.markdown-body {
+    flex: 1 1 0;
+    min-width: 0;
+    background: transparent;
+    color: #e0e0e0;
+    border-radius: 8px;
+    box-shadow: none;
+    font-size: 1.13rem;
+    padding: 0;
+    line-height: 1.7;
+    word-break: break-word;
+    /* No fixed width or max-width here */
+}
+
+/* Make markdown headings and containers blend with page */
+.markdown-body,
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    scroll-margin-top: 90px; /* Adjust this value to match your navbar + padding */
+}
+
+/* Code blocks: only style <pre>, not <pre> code */
+.markdown-body pre {
+    position: relative;
+    background: #18181c !important;
+    color: #39ff14 !important;
+    border: none !important;
+    box-shadow: 0 2px 12px #000a !important;
+    font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace !important;
+    font-size: 1.05em !important;
+    line-height: 1.6 !important;
+    padding: 1.1em 1.2em !important;
+    border-radius: 10px !important;
+    overflow-x: auto !important;
+    white-space: pre !important;
+    margin-bottom: 1.5rem;
+    padding-right: 3em !important; /* Add space for the button */
+}
+
+/* Remove background, padding, and border from code inside pre */
+.markdown-body pre code {
+    background: none !important;
+    color: inherit !important;
+    padding: 0 !important;
+    border: none !important;
+    font-size: inherit !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    white-space: pre !important;
+}
+
+/* Inline code */
+.markdown-body code:not(pre code) {
+    background: #23272e !important;
+    color: #39ff14 !important;
+    border-radius: 4px !important;
+    padding: 0.18em 0.45em !important;
+    font-size: 1em !important;
+}
+
+/* Remove extra margin/padding from headings for a tighter look */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    padding: 0 !important;
+}
+
+/* Optional: soften hr lines */
+.markdown-body hr {
+    border-color: #23272e !important;
+    opacity: 0.4;
+}
+
+/* Optional: make tables blend in */
+.markdown-body table {
+    background: #18181c !important;
+    color: #e0e0e0 !important;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.markdown-body img {
+    display: block;
+    margin: 1.5rem auto;
+    max-width: 90%;
+    border-radius: 10px;
+    box-shadow: 0 4px 24px #000a;
+    border: 1.5px solid #23272e;
+    transition: transform 0.2s;
+    opacity: 1;           /* Always visible */
+    filter: none;         /* No blur or grayscale */
+}
+.markdown-body img:hover {
+    transform: scale(1.03); /* Optional: slight zoom on hover */
+    opacity: 1;             /* No change on hover */
+    filter: none;
+}
+
+.markdown-body pre {
+    position: relative;
+    background: #18181c !important;
+    border-radius: 6px;
+    overflow: auto;
+    margin-bottom: 1.5rem;
+    padding-top: 2.2em !important;
+    box-shadow: 0 2px 12px #000a;
+}
+
+.markdown-body code {
+    background: #23272e;
+    color: #39ff14;
+    border-radius: 4px;
+    padding: 0.2em 0.4em;
+    font-size: 1em;
+}
+
+/* Style for images and links in markdown */
+.markdown-body a {
+    color: #58a6ff;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+.markdown-body a:hover {
+    color: #e53935;
+}
+
+/* Custom copy button style for code blocks */
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin: 0;
+    background: #23272e;
+    color: #39ff14;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: background 0.2s, color 0.2s, opacity 0.2s;
+    z-index: 2;
+}
+.copy-btn:hover {
+    background: #39ff14;
+    color: #23272e;
+    opacity: 1;
+}
+
+/* Hide scrollbars for markdown-body */
+.markdown-body {
+    scrollbar-width: none;
+}
+.markdown-body::-webkit-scrollbar {
+    display: none;
+}
+
+/* Remove bottom margin from last element in markdown-body */
+.markdown-body > *:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Remove bottom margin from images and paragraphs if they are last */
+.markdown-body img:last-child,
+.markdown-body p:last-child,
+.markdown-body ul:last-child,
+.markdown-body ol:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Optional: tighten up spacing between paragraphs and images */
+.markdown-body p,
+.markdown-body img {
+    margin-bottom: 0.7em;
+}
+
+#language-select {
+    margin-left: 2rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #23272e;
+    background: #23272e;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    height: 2rem;
+    min-width: 120px;
+    max-width: 180px;
+    line-height: 1.2;
+}
+#language-select:focus {
+    outline: 2px solid #e53935;
+}
+
+/* Search modal styles */
+.search-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(20,20,22,0.55); /* slightly transparent for effect */
+    z-index: 3000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4vh;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    backdrop-filter: blur(2px); /* subtle blur for modal background */
+}
+.search-modal.active {
+    display: flex !important;
+}
+body.modal-open {
+    overflow: hidden !important;
+}
+.search-modal-content {
+    background: #18181c;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px #000a;
+    width: 650px;
+    max-width: 96vw;
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    position: relative;
+}
+#modal-search-box {
+    width: 95%;
+    padding: 0.7rem 1.2rem;
+    font-size: 1.2rem;
+    border-radius: 6px;
+    border: none;
+    background: #23272e;
+    color: #e0e0e0;
+    margin-bottom: 1.2rem;
+    outline: none;
+}
+#close-search-modal {
+    position: absolute;
+    right: 1.2rem;
+    top: 1.2rem;
+    background: none;
+    border: none;
+    color: #e53935;
+    font-size: 2rem;
+    cursor: pointer;
+    font-weight: bold;
+}
+#search-results {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.search-result-item {
+    background: #23272e;
+    border-radius: 7px;
+    margin-bottom: 1.1rem;
+    padding: 1rem 1.2rem;
+    color: #e0e0e0;
+    box-shadow: 0 2px 12px #0004;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.search-result-item:hover {
+    background: #e53935;
+    color: #fff;
+}
+.search-result-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+}
+.search-result-snippet {
+    font-size: 0.98rem;
+    color: #bdbdbd;
+}
+.search-icon-btn {
+    background: #23272e;
+    border: 1px solid #23272e;
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+    margin-left: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s, border 0.2s;
+}
+.search-icon-btn:hover, .search-icon-btn:focus {
+    background: #e53935;
+    border: 1px solid #e53935;
+    outline: none;
+}
+.search-icon-btn svg {
+    display: block;
+}
+
+/* Add this for blur effect when modal is open */
+body.modal-open > .container,
+body.modal-open > .navbar {
+    filter: blur(0.1px) brightness(0.85);
+    transition: filter 0.2s;
+    pointer-events: none;
+    user-select: none;
+}
+
+.subcontent-box {
+    width: 270px;
+    min-width: 220px;
+    max-width: 320px;
+    min-height: 60px;
+    background: #23272e;
+    color: #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px #0004;
+    padding: 1.1rem 1.2rem;
+    z-index: 10;
+    font-size: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1.5px solid #e53935;
+    margin-top: 2rem;
+    margin-left: 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 2rem; /* Adjust as needed for spacing from the top */
+}
+
+@media (max-width: 1100px) {
+    .main-content {
+        flex-direction: column;
+        gap: 0;
+    }
+    .subcontent-box {
+        width: 100%;
+        margin-top: 1.5rem;
+        margin-left: 0;
+        position: static;
+        max-height: none;
+    }
+}
+
+/* Home Page Styles */
+.home-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding-bottom: 2rem;
+}
+
+.home-terminal-card {
+    background: linear-gradient(120deg, #18181c 80%, #23272e 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 32px #000a, 0 0 0 2px #e5393530 inset;
+    max-width: 720px;
+    width: 100%;
+    padding: 2.5rem 2rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-terminal-glow {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, #e5393530 60%, transparent 100%);
+    z-index: 0;
+}
+
+.home-terminal-content {
+    position: relative;
+    z-index: 1;
+}
+
+.home-terminal-title {
+    font-family: 'Fira Mono', Consolas, monospace;
+    font-size: 1.35rem;
+    color: #39ff14;
+    letter-spacing: 1px;
+}
+
+.home-terminal-welcome {
+    color: #e0e0e0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1.2rem 0 0.7rem 0;
+}
+
+.blink {
+    animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.home-terminal-lines {
+    color: #39ff14;
+    font-family: 'Fira Mono', Consolas, monospace;
+    font-size: 1.08rem;
+    line-height: 2;
+}
+
+.home-terminal-lines .green {
+    color: #39ff14;
+}
+.home-terminal-lines .red {
+    color: #e53935;
+}
+
+.red {
+    color: #e53935;
+}
+.green {
+    color: #39ff14;
+}
+
+kbd {
+    background: #23272e;
+    color: #39ff14;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.98em;
+    font-family: 'Fira Mono', Consolas, monospace;
+    margin: 0 2px;
+    border: 1px solid #333;
+    box-shadow: 0 1px 2px #0006;
+}
+
+.home-tip {
+    margin-top: 2.5rem;
+    text-align: center;
+}
+
+.tip-title {
+    font-size: 1.1rem;
+    margin-right: 0.5em;
+}
+
+.home-facts {
+    margin-top: 3rem;
+    padding: 1.5rem 2rem;
+    background: #1e1e24;
+    border-radius: 12px;
+    box-shadow: 0 0 16px #0009;
+    max-width: 700px;
+    width: 90%;
+}
+
+/* Add to styles.css for resources page enhancements */
+.resources-hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.resources-terminal-card {
+    background: linear-gradient(120deg, #18181c 80%, #23272e 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 32px #000a, 0 0 0 2px #e5393530 inset;
+    max-width: 800px;
+    width: 100%;
+    padding: 2rem 2rem 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.resources-terminal-title {
+    font-family: 'Fira Mono', Consolas, monospace;
+    font-size: 1.25rem;
+    color: #39ff14;
+    letter-spacing: 1px;
+    margin-bottom: 1.2rem;
+}
+
+.resources-terminal-lines {
+    color: #39ff14;
+    font-family: 'Fira Mono', Consolas, monospace;
+    font-size: 1.08rem;
+    line-height: 2;
+}
+
+.resources-terminal-lines .green { color: #39ff14; }
+.resources-terminal-lines .red { color: #e53935; }
+
+.resources-list {
+    
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.resource-category {
+    background: #18181c;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px #000a;
+    padding: 1.5rem 2rem 1.2rem 2rem;
+    max-width: 800px;
+    width: 100%;
+    padding-top: 0px;
+    padding-bottom: 30px;
+    margin: 0 auto;
+}
+
+.resource-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #e53935;
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+    font-family: 'Fira Mono', Consolas, monospace;
+    font-weight: 700;
+}
+
+.category-icon {
+    font-size: 1.3em;
+    filter: drop-shadow(0 0 2px #39ff14);
+}
+
+.resource-category ul {
+    margin: 0;
+    padding-left: 1.2em;
+    color: #e0e0e0;
+    font-size: 1.07rem;
+    line-height: 1.8;
+    list-style: disc inside;
+}
+
+.resource-category a {
+    color: #39ff14;
+    text-decoration: underline;
+    transition: color 0.2s;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.resource-category a:hover {
+    color: #e53935;
+    text-shadow: 0 0 6px #e5393530;
+}
+
+/* Add to styles.css for dev page enhancements */
+.dev-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 2.2rem;
+    flex-wrap: wrap;
+    background: #18181c;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px #000a;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2.2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dev-profile-img {
+    width: 320px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #e53935;
+    object-fit: cover;
+    box-shadow: 0 2px 16px #0007;
+}
+
+.dev-profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dev-title {
+    margin: 0 0 0.2em 0;
+    color: #fff;
+    font-size: 2.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.dev-role {
+    color: #aaa;
+    font-size: 1.1em;
+    margin-bottom: 0.7em;
+}
+
+.dev-linkedin-btn {
+    display: inline-block;
+    padding: 0.7em 1.5em;
+    background: #23272e;
+    color: #e53935;
+    border-radius: 6px;
+    font-size: 1.08em;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 2px 12px #000a;
+    transition: background 0.2s, color 0.2s;
+    border: none;
+    text-align: center;
+}
+
+.dev-linkedin-btn:hover,
+.dev-linkedin-btn:focus {
+    background: #e53935;
+    color: #fff !important;
+}
+
+.dev-bio {
+    margin-top: 1.5em;
+    color: #e0e0e0;
+    font-size: 1.08em;
+    line-height: 1.7;
+    background: #18181c;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px #000a;
+    padding: 2rem 2.5rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}

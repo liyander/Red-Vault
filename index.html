@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Vault</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-title">Red Vault</div>
+        <ul class="navbar-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="resources.html">Resources</a></li>
+            <li><a href="dev.html">Dev</a></li>
+        </ul>
+        <button id="open-search-modal" class="search-icon-btn" title="Search">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="7" stroke="#e0e0e0" stroke-width="2"/>
+                <line x1="14.2" y1="14.2" x2="19" y2="19" stroke="#e0e0e0" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </nav>
+    <div class="container">
+        <aside class="sidebar">
+            <ul id="md-list">
+                <li><a href="#" data-md="Readme/Readme.md">README.md</a></li>
+                <li><a href="#" data-md="planning/HBT - Planning.md">HTB - Planning</a></li>
+                <li><a href="#" data-md="Active-Directory/Active_Directory.markdown">AD (Check List)</a></li>
+                <li><a href="#" data-md="sliver/Sliver_documentation.markdown" >Sliver C2</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <div id="main-content" class="markdown-body">
+                <div style="color:#888;font-size:1.1rem;">Select a Markdown file from the sidebar.</div>
+            </div>
+            <div id="subcontent-box" class="subcontent-box">
+                <!-- Subcontent (e.g., table of contents or quick links) will go here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="search-modal" class="search-modal">
+        <div class="search-modal-content">
+            <span id="close-search-modal" class="close-btn">&times;</span>
+            <h2>Search</h2>
+            <input type="text" id="modal-search-box" placeholder="Search...">
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch and render markdown
+        function loadMarkdown(mdPath) {
+            fetch(mdPath)
+                .then(res => {
+                    if (!res.ok) throw new Error('File not found');
+                    return res.text();
+                })
+                .then(md => {
+                    // Render markdown
+                    document.getElementById('main-content').innerHTML = marked.parse(md, {
+                        highlight: function(code, lang) {
+                            return hljs.highlightAuto(code, [lang]).value;
+                        }
+                    });
+                    addCopyButtons();
+                    updateSubcontentBox(); // <-- Add this line
+                })
+                .catch(err => {
+                    document.getElementById('main-content').innerHTML = `<div style="color:#e53935;">Error: ${err.message}</div>`;
+                    document.getElementById('subcontent-box').innerHTML = '';
+                });
+        }
+
+        // Update subcontent box (e.g., table of contents)
+        function updateSubcontentBox() {
+            const mainContent = document.getElementById('main-content');
+            const subcontentBox = document.getElementById('subcontent-box');
+            // Table of Contents from headings
+            const headings = mainContent.querySelectorAll('h1, h2, h3');
+            if (headings.length === 0) {
+                subcontentBox.innerHTML = '';
+                return;
+            }
+            let toc = '<div style="font-weight:bold;margin-bottom:0.7rem;">On this page</div><ul style="padding-left:1em;">';
+            headings.forEach(h => {
+                // Ensure each heading has an id
+                if (!h.id) {
+                    h.id = h.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+                }
+                toc += `<li style="margin-bottom:0.3em;">
+                    <a href="#${h.id}" class="toc-link" style="color:#e53935;text-decoration:none;font-size:0.98em;">${h.textContent}</a>
+                </li>`;
+            });
+            toc += '</ul>';
+            subcontentBox.innerHTML = toc;
+
+            // Add smooth scroll for toc links
+            subcontentBox.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.getElementById(this.getAttribute('href').substring(1));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        }
+
+        // Add copy buttons to all code blocks
+        function addCopyButtons() {
+            document.querySelectorAll('.markdown-body pre').forEach(pre => {
+                // Avoid duplicate buttons
+                if (pre.parentElement.classList.contains('pre-wrapper')) return;
+
+                // Create wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'pre-wrapper';
+                wrapper.style.position = 'relative';
+
+                // Insert wrapper before pre and move pre inside
+                pre.parentNode.insertBefore(wrapper, pre);
+                wrapper.appendChild(pre);
+
+                // Create the button
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.textContent = 'Copy';
+
+                btn.style.position = 'absolute';
+                btn.style.top = '8px';
+                btn.style.right = '8px';
+
+                btn.onclick = function() {
+                    const code = pre.querySelector('code');
+                    if (code) {
+                        navigator.clipboard.writeText(code.innerText).then(() => {
+                            btn.textContent = 'Copied!';
+                            setTimeout(() => btn.textContent = 'Copy', 1200);
+                        });
+                    }
+                };
+
+                wrapper.appendChild(btn);
+            });
+        }
+
+        // Sidebar links
+        document.getElementById('md-list').addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.dataset.md) {
+                e.preventDefault();
+                loadMarkdown(e.target.dataset.md);
+                // Highlight active link
+                Array.from(this.querySelectorAll('a')).forEach(a => a.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+        });
+
+      
+
+// async function translateTextNodes(element, lang) {
+//     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+//     const textNodes = [];
+//     while (walker.nextNode()) {
+//         const node = walker.currentNode;
+//         if (node.nodeValue.trim().length > 0) textNodes.push(node);
+//     }
+//     for (const node of textNodes) {
+//         try {
+//             const res = await fetch(`${AZURE_TRANSLATOR_ENDPOINT}&to=${lang}`, {
+//                 method: "POST",
+//                 headers: {
+//                     "Ocp-Apim-Subscription-Key": AZURE_TRANSLATOR_KEY,
+//                     "Ocp-Apim-Subscription-Region": AZURE_TRANSLATOR_REGION,
+//                     "Content-Type": "application/json"
+//                 },
+//                 body: JSON.stringify([{ Text: node.nodeValue }])
+//             });
+//             const data = await res.json();
+//             if (data && data[0] && data[0].translations && data[0].translations[0]) {
+//                 node.nodeValue = data[0].translations[0].text;
+//             }
+//         } catch (e) {
+//             console.log(e);
+//         }
+//     }
+// }
+
+// document.getElementById('language-select').addEventListener('change', async function() {
+//     const lang = this.value;
+//     const mainContent = document.getElementById('main-content');
+
+//     if (lang === "en") {
+//         // Reload the markdown to restore original English
+//         const activeLink = document.querySelector('.sidebar a.active');
+//         if (activeLink) {
+//             activeLink.click();
+//         }
+//         return;
+//     }
+
+//     mainContent.style.opacity = "0.5";
+//     mainContent.style.pointerEvents = "none";
+//     mainContent.innerHTML += `<div id="translating-msg" style="color:#e53935;margin-top:1rem;">Translating...</div>`;
+
+//     try {
+//         await translateTextNodes(mainContent, lang);
+//     } catch (e) {
+//         // On error, reload the original content (simulate English reload)
+//         const activeLink = document.querySelector('.sidebar a.active');
+//         if (activeLink) {
+//             activeLink.click();
+//         }
+//     } finally {
+//         const msg = document.getElementById('translating-msg');
+//         if (msg) msg.remove();
+//         mainContent.style.opacity = "1";
+//         mainContent.style.pointerEvents = "";
+//     }
+// });
+
+let allMarkdownCache = {};
+const openSearchModalBtn = document.getElementById('open-search-modal');
+const searchModal = document.getElementById('search-modal');
+const modalSearchBox = document.getElementById('modal-search-box');
+
+async function fetchAllMarkdownFiles() {
+    
+    const links = Array.from(document.querySelectorAll('#md-list a[data-md]'));
+    for (const link of links) {
+        const mdPath = link.getAttribute('data-md');
+        if (!allMarkdownCache[mdPath]) {
+            try {
+                const res = await fetch(mdPath);
+                if (res.ok) {
+                    allMarkdownCache[mdPath] = await res.text();
+                } else {
+                    allMarkdownCache[mdPath] = '';
+                }
+            } catch {
+                allMarkdownCache[mdPath] = '';
+            }
+        }
+    }
+}
+
+// When modal opens, fetch all markdown files if not already cached
+openSearchModalBtn.addEventListener('click', async function() {
+    searchModal.classList.add('active');
+    document.body.classList.add('modal-open');
+    setTimeout(() => modalSearchBox.focus(), 100);
+    await fetchAllMarkdownFiles();
+});
+
+// Modal search logic: search all loaded markdown files
+modalSearchBox.addEventListener('input', function() {
+    const query = this.value.trim().toLowerCase();
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = '';
+    if (query.length < 2) return;
+
+    let results = [];
+    for (const [mdPath, mdContent] of Object.entries(allMarkdownCache)) {
+        const lines = mdContent.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].toLowerCase().includes(query)) {
+                // Find a title above (if any)
+                let title = '';
+                for (let j = i; j >= 0; j--) {
+                    if (lines[j].startsWith('#')) {
+                        title = lines[j].replace(/^#+\s*/, '');
+                        break;
+                    }
+                }
+                results.push({
+                    file: mdPath,
+                    title: title || 'Result',
+                    snippet: lines[i]
+                });
+            }
+        }
+    }
+
+    if (results.length === 0) {
+        resultsDiv.innerHTML = '<div style="color:#e53935;">No results found.</div>';
+        return;
+    }
+    results.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `<div class="search-result-title">${r.title} <span style="font-size:0.95em;color:#888;">[${r.file}]</span></div>
+                          <div class="search-result-snippet">${r.snippet.replace(new RegExp(query, 'gi'), m => `<mark class="search-highlight">${m}</mark>`)}</div>`;
+        item.onclick = () => {
+            // Load the markdown file and close modal
+            loadMarkdown(r.file);
+            searchModal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        };
+        resultsDiv.appendChild(item);
+    });
+});
+
+const closeSearchModal = document.getElementById('close-search-modal');
+
+closeSearchModal.addEventListener('click', function() {
+    searchModal.classList.remove('active');
+    document.body.classList.remove('modal-open');
+    modalSearchBox.value = '';
+    document.getElementById('search-results').innerHTML = '';
+});
+
+searchModal.addEventListener('click', function(e) {
+    // If the user clicks directly on the modal background (not the content)
+    if (e.target === searchModal) {
+        searchModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        modalSearchBox.value = '';
+        document.getElementById('search-results').innerHTML = '';
+    }
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+    // Find the first sidebar link with data-md
+    const firstLink = document.querySelector('#md-list a[data-md]');
+    if (firstLink) {
+        firstLink.classList.add('active');
+        loadMarkdown(firstLink.getAttribute('data-md'));
+    }
+});
+    </script>
+</body>
+</html>
