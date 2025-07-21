@@ -48,6 +48,14 @@ const SIDEBAR_CONFIG = [
         path: "ADPEN/data_exfiltration.markdown"
     },
     {
+        title: "Certipy AD",
+        path: "ADPEN/Certipy.markdown"
+    },
+    {
+        title: "Impacket All modules",
+        path: "ADPEN/Impacket.markdown"
+    },
+    {
         title: "Reporting",
         path: "ADPEN/reporting.markdown"
     },
