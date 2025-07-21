@@ -48,5 +48,5 @@ This website is intended for educational and authorized security testing purpose
 
 ---
 
-Happy hacking!  
-— The Red Vault Developer (CyberGhost05)"# Red-Vault" 
+May the force be with you all!  
+— The Red Vault Developer (CyberGhost05) "# Red-Vault" 
