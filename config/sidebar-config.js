@@ -8,6 +8,10 @@ const SIDEBAR_CONFIG = [
         path: "planning/HBT - Planning.md"
     },
     {
+        title: "BABY(HTB) - Vulnlab",
+        path: "baby/Baby.md"
+    },
+    {
         title: "AD (Check List)",
         path: "Active-Directory/Active_Directory.markdown"
     },
