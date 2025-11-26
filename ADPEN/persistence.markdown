@@ -56,258 +56,6 @@ This document covers techniques for maintaining long-term access to a compromise
 
 ---
 
-## Skills to Develop
-
-### Technical Skills
-
-#### 1. **Credential Extraction & Manipulation**
-- **Mimikatz mastery:** All modules (sekurlsa, kerberos, lsadump, dpapi)
-- **LSASS dumping:** Multiple techniques (ProcDump, comsvcs.dll, Task Manager)
-- **Offline hash extraction:** From NTDS.dit and SAM files
-- **Ticket export/import:** Saving and loading Kerberos tickets
-- **Hash formats:** Understanding NTLM, LM, NTLMv2, Kerberos keys
-- **Memory forensics:** Analyzing process memory for credentials
-
-#### 2. **Kerberos Ticket Forging**
-- **Golden Ticket creation:** Understanding all parameters and flags
-- **Silver Ticket creation:** Service-specific ticket forging
-- **Ticket lifetime manipulation:** Setting custom validity periods
-- **Group membership injection:** Adding arbitrary SIDs to tickets
-- **Inter-realm ticket forging:** Trust ticket creation
-- **Ticket renewal and validation:** Understanding ticket lifecycle
-
-#### 3. **Active Directory Database Manipulation**
-- **DCSync operations:** Remote credential dumping via replication
-- **NTDS.dit extraction:** Shadow copy and backup methods
-- **Offline analysis:** Secretsdump.py, DSInternals PowerShell module
-- **Permission granting:** Adding replication rights to accounts
-- **Attribute modification:** Changing user/computer properties
-- **Schema understanding:** AD object classes and attributes
-
-#### 4. **Windows Registry Manipulation**
-- **Remote registry access:** Connecting to and modifying remote registries
-- **LSA registry keys:** Understanding security configuration
-- **Service configuration:** Modifying service parameters
-- **Persistence registry keys:** Run keys, services, drivers
-- **Registry hive extraction:** Saving and analyzing offline
-- **Registry monitoring:** Detecting and analyzing changes
-
-#### 5. **Windows Service & DLL Management**
-- **Service creation and modification:** Creating persistence services
-- **DLL injection techniques:** Various injection methods
-- **DLL search order hijacking:** Exploiting load paths
-- **Service account permissions:** Understanding service contexts
-- **SCM (Service Control Manager):** Service management API
-- **DLL compilation:** Creating custom payloads
-
-#### 6. **Stealth & Operational Security**
-- **Event log manipulation:** Clearing and modifying logs
-- **Timestamp manipulation:** Backdating files and events
-- **Process hiding:** Concealing malicious processes
-- **Network traffic obfuscation:** Encrypted C2 channels
-- **Living-off-the-land:** Using native Windows tools
-- **Indicator of Compromise (IOC) awareness:** Minimizing footprint
-
-### Analytical Skills
-
-#### 1. **Persistence Planning**
-- Identifying optimal persistence locations
-- Risk vs. reward analysis for each technique
-- Understanding detection likelihood
-- Selecting appropriate persistence methods
-- Planning backup persistence mechanisms
-
-#### 2. **Environment Assessment**
-- Identifying security controls in place
-- Understanding organizational processes
-- Evaluating password rotation policies
-- Assessing monitoring capabilities
-- Finding gaps in defensive coverage
-
-#### 3. **Threat Modeling**
-- Understanding defender's perspective
-- Anticipating incident response procedures
-- Identifying likely detection points
-- Planning for compromise recovery
-- Evaluating long-term viability
-
-#### 4. **Post-Compromise Strategy**
-- Balancing persistence with stealth
-- Prioritizing access maintenance
-- Understanding acceptable risk levels
-- Planning exit strategies
-- Documenting access methods
-
-### Operational Skills
-
-#### 1. **Domain Controller Access**
-- Various methods to access DCs remotely
-- WinRM, RDP, SMB access techniques
-- Scheduled task creation on DCs
-- PowerShell remoting to DCs
-- Understanding DC security hardening
-
-#### 2. **Credential Management**
-- Organizing harvested credentials
-- Tracking credential validity
-- Understanding credential lifecycles
-- Password spray planning
-- Credential rotation detection
-
-#### 3. **Tool Proficiency**
-- **Mimikatz:** Complete command reference
-- **Rubeus:** Kerberos exploitation
-- **Impacket suite:** secretsdump.py, getTGT.py, getST.py
-- **PowerSploit:** Invoke-Mimikatz, PowerView
-- **DSInternals:** PowerShell AD manipulation
-- **Custom script development:** Automation and customization
-
-#### 4. **Incident Response Awareness**
-- Understanding detection mechanisms
-- Recognizing investigation patterns
-- Knowing common IR procedures
-- Planning for detected scenarios
-- Evidence cleanup techniques
-
----
-
-## Learning Path Recommendations
-
-### Beginner Level
-1. Understand basic Windows authentication (NTLM, Kerberos)
-2. Learn credential dumping from LSASS
-3. Practice basic Mimikatz commands
-4. Understand SAM and LSA Secrets
-5. Learn about Golden and Silver Tickets
-
-### Intermediate Level
-1. Master DCSync attacks and replication abuse
-2. Understand DSRM and local DC accounts
-3. Learn registry-based persistence
-4. Practice SSP/DLL injection techniques
-5. Study detection methods and evasion
-6. Understand Skeleton Key attacks
-
-### Advanced Level
-1. Develop custom persistence mechanisms
-2. Master stealth and OPSEC techniques
-3. Learn advanced Kerberos manipulation
-4. Understand Credential Guard bypass
-5. Practice in monitored environments
-6. Combine multiple persistence layers
-
-### Expert Level
-1. Research novel persistence techniques
-2. Develop automated persistence frameworks
-3. Bypass advanced security controls
-4. Contribute to offensive tools
-5. Teach and mentor others
-6. Write detailed documentation and research
-
----
-
-## Recommended Lab Practice
-
-### Lab Setup Requirements
-- **Multi-DC environment:** At least 2 Domain Controllers
-- **Security monitoring:** SIEM, EDR for detection practice
-- **Varied OS versions:** Different Windows versions
-- **Security controls:** Credential Guard, LSA Protection, AppLocker
-- **Snapshot capability:** Quick rollback for testing
-
-### Practice Scenarios
-
-#### 1. **Golden Ticket Mastery**
-- Extract krbtgt hash from DC
-- Forge tickets with various lifetimes
-- Test ticket with different group memberships
-- Practice ticket injection methods
-- Evade detection mechanisms
-
-#### 2. **DCSync Operations**
-- Grant replication permissions to low-priv account
-- Remotely dump all domain credentials
-- Selective credential extraction
-- Evade Event ID 4662 detection
-- Maintain replication-based backdoor
-
-#### 3. **DSRM Abuse**
-- Extract DSRM password from DC
-- Modify registry for logon behavior
-- Pass-the-hash with DSRM account
-- Maintain access despite domain password changes
-- Clean up registry modifications
-
-#### 4. **Skeleton Key Deployment**
-- Patch LSASS on DC successfully
-- Test master password authentication
-- Verify original passwords still work
-- Handle LSA Protection bypass
-- Remove skeleton key cleanly
-
-#### 5. **Custom SSP Deployment**
-- Register mimilib.dll on DC
-- Verify credential logging
-- Test persistence across reboots
-- Review captured plaintext credentials
-- Evade DLL loading detection
-
-#### 6. **Layered Persistence**
-- Implement 3+ different persistence methods
-- Test survival after password resets
-- Verify stealth of each method
-- Practice restoration after detection
-- Document complete access restoration procedure
-
----
-
-## Detection & Blue Team Awareness
-
-### Key Indicators of Compromise (IOCs)
-
-#### Golden Ticket Detection
-- Event ID 4769 (TGS Request) with unusual encryption types
-- Tickets with abnormal lifetimes (>10 hours)
-- Service tickets without prior TGT requests
-- Tickets for disabled/deleted accounts
-- Anomalous group memberships in tickets
-
-#### DCSync Detection
-- Event ID 4662 (Directory Service Access) with replication GUIDs
-- Replication requests from non-DC computers
-- Unusual accounts with DS-Replication rights
-- Anomalous time of replication activity
-- Failed replication attempts
-
-#### DSRM Abuse Detection
-- Registry modifications to DsrmAdminLogonBehaviour
-- SAM hive access on Domain Controllers
-- Local administrator logons on DCs
-- Event ID 4794 (DSRM password change attempts)
-
-#### Skeleton Key Detection
-- Event ID 7045 (Service installed - mimikatz driver)
-- LSASS process memory anomalies
-- Failed authentication with "mimikatz" password
-- Event ID 4673 (Sensitive privilege use)
-
-#### SSP Detection
-- Registry changes to Security Packages
-- Unusual DLLs loaded by LSASS (Sysmon Event ID 7)
-- kiwissp.log file creation
-- LSASS loading unsigned DLLs
-
-### Defensive Recommendations
-- **krbtgt rotation:** Rotate twice annually minimum
-- **Replication monitoring:** Alert on non-DC replication
-- **LSA Protection:** Enable RunAsPPL on DCs
-- **Credential Guard:** Deploy on sensitive systems
-- **Tiered Administration:** Separate admin account levels
-- **Audit policies:** Enable advanced auditing
-- **SIEM correlation:** Cross-reference multiple event types
-
----
-
 ### Golden Ticket Attack
 
 **What is a Golden Ticket?** 
@@ -618,3 +366,255 @@ Invoke-Mimikatz -Command '"misc::memssp"'
 ```
 
 Now all logons on the DC are logged to -> C:\Windows\System32\kiwissp.log
+
+## Skills to Develop
+
+### Technical Skills
+
+#### 1. **Credential Extraction & Manipulation**
+- **Mimikatz mastery:** All modules (sekurlsa, kerberos, lsadump, dpapi)
+- **LSASS dumping:** Multiple techniques (ProcDump, comsvcs.dll, Task Manager)
+- **Offline hash extraction:** From NTDS.dit and SAM files
+- **Ticket export/import:** Saving and loading Kerberos tickets
+- **Hash formats:** Understanding NTLM, LM, NTLMv2, Kerberos keys
+- **Memory forensics:** Analyzing process memory for credentials
+
+#### 2. **Kerberos Ticket Forging**
+- **Golden Ticket creation:** Understanding all parameters and flags
+- **Silver Ticket creation:** Service-specific ticket forging
+- **Ticket lifetime manipulation:** Setting custom validity periods
+- **Group membership injection:** Adding arbitrary SIDs to tickets
+- **Inter-realm ticket forging:** Trust ticket creation
+- **Ticket renewal and validation:** Understanding ticket lifecycle
+
+#### 3. **Active Directory Database Manipulation**
+- **DCSync operations:** Remote credential dumping via replication
+- **NTDS.dit extraction:** Shadow copy and backup methods
+- **Offline analysis:** Secretsdump.py, DSInternals PowerShell module
+- **Permission granting:** Adding replication rights to accounts
+- **Attribute modification:** Changing user/computer properties
+- **Schema understanding:** AD object classes and attributes
+
+#### 4. **Windows Registry Manipulation**
+- **Remote registry access:** Connecting to and modifying remote registries
+- **LSA registry keys:** Understanding security configuration
+- **Service configuration:** Modifying service parameters
+- **Persistence registry keys:** Run keys, services, drivers
+- **Registry hive extraction:** Saving and analyzing offline
+- **Registry monitoring:** Detecting and analyzing changes
+
+#### 5. **Windows Service & DLL Management**
+- **Service creation and modification:** Creating persistence services
+- **DLL injection techniques:** Various injection methods
+- **DLL search order hijacking:** Exploiting load paths
+- **Service account permissions:** Understanding service contexts
+- **SCM (Service Control Manager):** Service management API
+- **DLL compilation:** Creating custom payloads
+
+#### 6. **Stealth & Operational Security**
+- **Event log manipulation:** Clearing and modifying logs
+- **Timestamp manipulation:** Backdating files and events
+- **Process hiding:** Concealing malicious processes
+- **Network traffic obfuscation:** Encrypted C2 channels
+- **Living-off-the-land:** Using native Windows tools
+- **Indicator of Compromise (IOC) awareness:** Minimizing footprint
+
+### Analytical Skills
+
+#### 1. **Persistence Planning**
+- Identifying optimal persistence locations
+- Risk vs. reward analysis for each technique
+- Understanding detection likelihood
+- Selecting appropriate persistence methods
+- Planning backup persistence mechanisms
+
+#### 2. **Environment Assessment**
+- Identifying security controls in place
+- Understanding organizational processes
+- Evaluating password rotation policies
+- Assessing monitoring capabilities
+- Finding gaps in defensive coverage
+
+#### 3. **Threat Modeling**
+- Understanding defender's perspective
+- Anticipating incident response procedures
+- Identifying likely detection points
+- Planning for compromise recovery
+- Evaluating long-term viability
+
+#### 4. **Post-Compromise Strategy**
+- Balancing persistence with stealth
+- Prioritizing access maintenance
+- Understanding acceptable risk levels
+- Planning exit strategies
+- Documenting access methods
+
+### Operational Skills
+
+#### 1. **Domain Controller Access**
+- Various methods to access DCs remotely
+- WinRM, RDP, SMB access techniques
+- Scheduled task creation on DCs
+- PowerShell remoting to DCs
+- Understanding DC security hardening
+
+#### 2. **Credential Management**
+- Organizing harvested credentials
+- Tracking credential validity
+- Understanding credential lifecycles
+- Password spray planning
+- Credential rotation detection
+
+#### 3. **Tool Proficiency**
+- **Mimikatz:** Complete command reference
+- **Rubeus:** Kerberos exploitation
+- **Impacket suite:** secretsdump.py, getTGT.py, getST.py
+- **PowerSploit:** Invoke-Mimikatz, PowerView
+- **DSInternals:** PowerShell AD manipulation
+- **Custom script development:** Automation and customization
+
+#### 4. **Incident Response Awareness**
+- Understanding detection mechanisms
+- Recognizing investigation patterns
+- Knowing common IR procedures
+- Planning for detected scenarios
+- Evidence cleanup techniques
+
+---
+
+## Learning Path Recommendations
+
+### Beginner Level
+1. Understand basic Windows authentication (NTLM, Kerberos)
+2. Learn credential dumping from LSASS
+3. Practice basic Mimikatz commands
+4. Understand SAM and LSA Secrets
+5. Learn about Golden and Silver Tickets
+
+### Intermediate Level
+1. Master DCSync attacks and replication abuse
+2. Understand DSRM and local DC accounts
+3. Learn registry-based persistence
+4. Practice SSP/DLL injection techniques
+5. Study detection methods and evasion
+6. Understand Skeleton Key attacks
+
+### Advanced Level
+1. Develop custom persistence mechanisms
+2. Master stealth and OPSEC techniques
+3. Learn advanced Kerberos manipulation
+4. Understand Credential Guard bypass
+5. Practice in monitored environments
+6. Combine multiple persistence layers
+
+### Expert Level
+1. Research novel persistence techniques
+2. Develop automated persistence frameworks
+3. Bypass advanced security controls
+4. Contribute to offensive tools
+5. Teach and mentor others
+6. Write detailed documentation and research
+
+---
+
+## Recommended Lab Practice
+
+### Lab Setup Requirements
+- **Multi-DC environment:** At least 2 Domain Controllers
+- **Security monitoring:** SIEM, EDR for detection practice
+- **Varied OS versions:** Different Windows versions
+- **Security controls:** Credential Guard, LSA Protection, AppLocker
+- **Snapshot capability:** Quick rollback for testing
+
+### Practice Scenarios
+
+#### 1. **Golden Ticket Mastery**
+- Extract krbtgt hash from DC
+- Forge tickets with various lifetimes
+- Test ticket with different group memberships
+- Practice ticket injection methods
+- Evade detection mechanisms
+
+#### 2. **DCSync Operations**
+- Grant replication permissions to low-priv account
+- Remotely dump all domain credentials
+- Selective credential extraction
+- Evade Event ID 4662 detection
+- Maintain replication-based backdoor
+
+#### 3. **DSRM Abuse**
+- Extract DSRM password from DC
+- Modify registry for logon behavior
+- Pass-the-hash with DSRM account
+- Maintain access despite domain password changes
+- Clean up registry modifications
+
+#### 4. **Skeleton Key Deployment**
+- Patch LSASS on DC successfully
+- Test master password authentication
+- Verify original passwords still work
+- Handle LSA Protection bypass
+- Remove skeleton key cleanly
+
+#### 5. **Custom SSP Deployment**
+- Register mimilib.dll on DC
+- Verify credential logging
+- Test persistence across reboots
+- Review captured plaintext credentials
+- Evade DLL loading detection
+
+#### 6. **Layered Persistence**
+- Implement 3+ different persistence methods
+- Test survival after password resets
+- Verify stealth of each method
+- Practice restoration after detection
+- Document complete access restoration procedure
+
+---
+
+## Detection & Blue Team Awareness
+
+### Key Indicators of Compromise (IOCs)
+
+#### Golden Ticket Detection
+- Event ID 4769 (TGS Request) with unusual encryption types
+- Tickets with abnormal lifetimes (>10 hours)
+- Service tickets without prior TGT requests
+- Tickets for disabled/deleted accounts
+- Anomalous group memberships in tickets
+
+#### DCSync Detection
+- Event ID 4662 (Directory Service Access) with replication GUIDs
+- Replication requests from non-DC computers
+- Unusual accounts with DS-Replication rights
+- Anomalous time of replication activity
+- Failed replication attempts
+
+#### DSRM Abuse Detection
+- Registry modifications to DsrmAdminLogonBehaviour
+- SAM hive access on Domain Controllers
+- Local administrator logons on DCs
+- Event ID 4794 (DSRM password change attempts)
+
+#### Skeleton Key Detection
+- Event ID 7045 (Service installed - mimikatz driver)
+- LSASS process memory anomalies
+- Failed authentication with "mimikatz" password
+- Event ID 4673 (Sensitive privilege use)
+
+#### SSP Detection
+- Registry changes to Security Packages
+- Unusual DLLs loaded by LSASS (Sysmon Event ID 7)
+- kiwissp.log file creation
+- LSASS loading unsigned DLLs
+
+### Defensive Recommendations
+- **krbtgt rotation:** Rotate twice annually minimum
+- **Replication monitoring:** Alert on non-DC replication
+- **LSA Protection:** Enable RunAsPPL on DCs
+- **Credential Guard:** Deploy on sensitive systems
+- **Tiered Administration:** Separate admin account levels
+- **Audit policies:** Enable advanced auditing
+- **SIEM correlation:** Cross-reference multiple event types
+
+---

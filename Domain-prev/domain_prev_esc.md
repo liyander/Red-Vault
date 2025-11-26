@@ -72,294 +72,6 @@ This document covers techniques for escalating privileges from a standard domain
 
 ---
 
-## Skills to Develop
-
-### Technical Skills
-
-#### 1. **Service Account Exploitation**
-- **Kerberoasting:** Request and crack service tickets
-- **Hash cracking:** Hashcat, John the Ripper proficiency
-- **Wordlist management:** Effective password lists
-- **ASREPRoasting:** Exploit accounts without pre-auth
-- **SPN enumeration:** Finding all service accounts
-- **Targeted attacks:** Forcing SPN registration
-
-#### 2. **Access Control List (ACL) Abuse**
-- **ACL enumeration:** PowerView, BloodHound, manual LDAP queries
-- **Attack path analysis:** Finding privilege escalation chains
-- **Permission modification:** Granting yourself additional rights
-- **Password reset attacks:** ForceChangePassword right
-- **Group membership manipulation:** AddMember right
-- **Object ownership changes:** WriteOwner abuse
-- **DACL modification:** WriteDacl exploitation
-
-#### 3. **Delegation Exploitation**
-- **Unconstrained delegation discovery:** Finding vulnerable systems
-- **TGT extraction:** Capturing cached tickets
-- **Printer bug exploitation:** Forcing DC authentication
-- **Constrained delegation abuse:** S4U2Self and S4U2Proxy
-- **RBCD configuration:** Setting msDS-AllowedToActOnBehalfOfOtherIdentity
-- **Machine account creation:** Using ms-DS-MachineAccountQuota
-- **Alternative service abuse:** Accessing unintended services
-
-#### 4. **Certificate Services Exploitation**
-- **Template enumeration:** Finding vulnerable configurations
-- **Certificate request:** Specifying arbitrary subjects
-- **Certificate authentication:** Using certs with Rubeus
-- **Certificate conversion:** PEM to PFX format
-- **ESC1-ESC8 techniques:** Various ADCS attack vectors
-- **Certificate theft:** Extracting existing certificates
-
-#### 5. **Credential Harvesting**
-- **LSASS dumping:** Multiple techniques and evasion
-- **SAM database extraction:** Local account hashes
-- **NTDS.dit extraction:** Shadow copy, backup methods
-- **DPAPI credential decryption:** Master key usage
-- **Group Policy Preferences (GPP):** cPassword decryption
-- **Shadow copy enumeration:** Finding backup data
-
-#### 6. **Vulnerability Exploitation**
-- **Zerologon:** DC machine account reset
-- **PrintNightmare:** Print Spooler RCE
-- **PetitPotam:** NTLM relay coercion
-- **noPAC/sAMAccountName spoofing:** Privilege escalation
-- **MS14-068:** Kerberos PAC validation bypass
-- **CVE tracking:** Staying current with AD vulnerabilities
-
-#### 7. **Windows Service Exploitation**
-- **DNS Admin abuse:** DLL injection into dns.exe
-- **Backup Operators abuse:** SeBackupPrivilege exploitation
-- **Print Spooler abuse:** Multiple attack vectors
-- **Exchange exploitation:** WriteDacl abuse
-- **Service modification:** Changing service binaries/parameters
-- **Scheduled task abuse:** Creating privileged tasks
-
-#### 8. **Network Attacks**
-- **LLMNR/NBT-NS poisoning:** Credential interception
-- **NTLM relay:** Relaying to LDAP, SMB, HTTP
-- **IPv6 attacks:** mitm6 exploitation
-- **Responder usage:** Network credential capture
-- **SMB relay chains:** Multi-hop relay attacks
-- **WebDAV coercion:** Forcing authentication
-
-### Analytical Skills
-
-#### 1. **Attack Path Identification**
-- Reading BloodHound graphs effectively
-- Identifying shortest path to Domain Admin
-- Understanding complex permission chains
-- Recognizing valuable intermediate targets
-- Prioritizing attack vectors by likelihood
-
-#### 2. **Environment Assessment**
-- Identifying installed security controls
-- Understanding organizational structure
-- Recognizing naming conventions
-- Identifying high-value targets
-- Assessing network segmentation
-
-#### 3. **Risk vs. Reward Analysis**
-- Evaluating detection likelihood
-- Assessing technique noise levels
-- Understanding impact of actions
-- Choosing appropriate attack vectors
-- Balancing speed vs. stealth
-
-#### 4. **Defensive Understanding**
-- Recognizing detection mechanisms
-- Understanding blue team capabilities
-- Anticipating defensive responses
-- Identifying logging gaps
-- Knowing when to pivot techniques
-
-### Operational Skills
-
-#### 1. **Tool Mastery**
-- **PowerView:** Domain enumeration and ACL abuse
-- **BloodHound/SharpHound:** Attack path visualization
-- **Rubeus:** Kerberos attack tool
-- **Mimikatz:** Credential extraction and manipulation
-- **Impacket suite:** Python-based AD tools
-- **Certify:** ADCS enumeration and exploitation
-- **PowerUpSQL:** SQL Server exploitation
-- **Responder/Inveigh:** Network poisoning
-- **Custom scripts:** PowerShell and Python automation
-
-#### 2. **Enumeration Methodology**
-- Systematic domain enumeration
-- User and group enumeration
-- Computer and service discovery
-- Trust relationship mapping
-- GPO enumeration and analysis
-- Share and file discovery
-- SQL Server discovery
-
-#### 3. **Privilege Escalation Methodology**
-- Starting from low-privilege user
-- Systematic permission enumeration
-- Identifying exploitable configurations
-- Chaining multiple vulnerabilities
-- Verifying Domain Admin access
-- Documenting attack path
-
-#### 4. **Stealth & OPSEC**
-- Minimizing detection footprint
-- Using living-off-the-land techniques
-- Avoiding AV/EDR triggers
-- Timing attacks appropriately
-- Cleaning up artifacts
-- Understanding logging mechanisms
-
----
-
-## Learning Path Recommendations
-
-### Beginner Level
-1. Understand basic AD structure and concepts
-2. Learn Kerberos and NTLM authentication fundamentals
-3. Master PowerView for enumeration
-4. Practice Kerberoasting in lab environment
-5. Learn basic ACL concepts and BloodHound usage
-6. Understand user, group, and computer objects
-
-### Intermediate Level
-1. Master ASREPRoasting techniques
-2. Learn delegation types and exploitation
-3. Practice ACL abuse and privilege escalation chains
-4. Understand GPO structure and abuse
-5. Learn NTLM relay attacks
-6. Practice credential dumping techniques
-7. Study ADCS fundamentals and attacks
-
-### Advanced Level
-1. Master RBCD attacks
-2. Learn complex ACL escalation paths
-3. Exploit ADCS misconfigurations (ESC1-ESC8)
-4. Understand and exploit trust relationships
-5. Master multiple privilege escalation techniques
-6. Learn DNSAdmins and Backup Operators abuse
-7. Practice PrintNightmare and Zerologon
-
-### Expert Level
-1. Discover novel attack techniques
-2. Chain multiple vulnerabilities
-3. Bypass advanced security controls
-4. Develop custom tools and exploits
-5. Contribute to offensive security research
-6. Teach and mentor others
-7. Understand defensive measures deeply
-
----
-
-## Recommended Lab Practice
-
-### Lab Setup Requirements
-- **Multi-domain environment:** Parent and child domains
-- **Various Windows versions:** Mix of Server and Client OS
-- **Service accounts:** With SPNs configured
-- **Certificate Services:** ADCS deployment
-- **Security controls:** EDR, AV for evasion practice
-- **Monitoring:** SIEM for blue team perspective
-- **Snapshot capability:** Quick rollback for testing
-
-### Practice Scenarios
-
-#### 1. **Kerberoasting Mastery**
-- Enumerate all SPNs in domain
-- Request service tickets for all accounts
-- Crack weak passwords offline
-- Target specific high-value service accounts
-- Practice OPSEC-safe Kerberoasting (AES tickets)
-
-#### 2. **ASREPRoasting Practice**
-- Find accounts without pre-auth required
-- Request AS-REP responses
-- Crack extracted hashes
-- Force disable pre-auth (if write permissions)
-- Test password spray correlation
-
-#### 3. **ACL Escalation Paths**
-- Use BloodHound to find paths to DA
-- Enumerate permissions with PowerView
-- Execute multi-hop ACL abuse
-- Grant yourself DCSync rights
-- Practice stealth ACL modification
-
-#### 4. **Delegation Attacks**
-- Find unconstrained delegation systems
-- Capture TGTs with printer bug
-- Configure RBCD on target computers
-- Abuse constrained delegation
-- Practice alternative service exploitation
-
-#### 5. **ADCS Exploitation**
-- Enumerate certificate templates
-- Identify ESC1 vulnerable templates
-- Request certificates for Domain Admin
-- Convert and use certificates with Rubeus
-- Practice persistence via certificates
-
-#### 6. **Trust Exploitation**
-- Map trust relationships
-- Exploit SID History (child to parent)
-- Abuse cross-domain permissions
-- Practice inter-realm ticket forging
-- Understand trust key extraction
-
-#### 7. **Complex Attack Chains**
-- Combine Kerberoasting + password spray
-- ACL abuse to RBCD to DA
-- NTLM relay to ADCS to authentication
-- SQL link traversal to privileged host
-- Multi-technique privilege escalation
-
----
-
-## Detection & Blue Team Awareness
-
-### Key Indicators of Compromise
-
-#### Kerberoasting Detection
-- Event ID 4769 (Kerberos Service Ticket Request) with RC4 encryption
-- Multiple TGS requests from single user in short timeframe
-- Requests for service tickets to uncommon SPNs
-- Ticket requests outside normal business hours
-
-#### ASREPRoasting Detection
-- Event ID 4768 (Kerberos TGT Request) for accounts without pre-auth
-- Multiple failed pre-authentication attempts
-- User account modifications to disable pre-auth
-
-#### ACL Abuse Detection
-- Event ID 5136 (Directory Service Object Modified)
-- Event ID 4662 (Operation performed on AD object)
-- Unusual permission changes on privileged groups
-- Modifications to msDS-AllowedToActOnBehalfOfOtherIdentity
-
-#### Delegation Abuse Detection
-- Event ID 4624 (Logon) with delegation indicators
-- Unusual systems performing DCSync (Event ID 4662)
-- New machine accounts created (Event ID 4741)
-- Changes to delegation settings
-
-#### ADCS Abuse Detection
-- Event ID 4886/4887 (Certificate request)
-- Certificate requests with unusual SANs
-- High volume of certificate enrollments
-- Enrollment from unusual users/computers
-
-### Defensive Recommendations
-- **Service Accounts:** Use gMSAs, long random passwords (30+ chars)
-- **Pre-authentication:** Ensure enabled for all accounts
-- **ACL Auditing:** Monitor permission changes on privileged objects
-- **Delegation:** Minimize unconstrained delegation, audit changes
-- **ADCS Hardening:** Fix vulnerable templates, require manager approval
-- **Monitoring:** Enable advanced audit policies, SIEM correlation
-- **Tiered Administration:** Separate privileged account tiers
-- **Least Privilege:** Minimal permissions for all accounts
-
----
-
 ### Kerberoast
 
 **What is Kerberoasting?** 
@@ -1283,3 +995,291 @@ A combination of two vulnerabilities allowing privilege escalation from standard
 - [noPAC](https://github.com/cube0x0/noPac) C# tool to exploit CVE-2021-42278 and CVE-2021-42287
 - [sam-the-admin](https://github.com/WazeHell/sam-the-admin) Python automated tool to exploit CVE-2021-42278 and CVE-2021-42287
 - [noPac](https://github.com/Ridter/noPac) Evolution of "sam-the-admin" tool
+
+## Skills to Develop
+
+### Technical Skills
+
+#### 1. **Service Account Exploitation**
+- **Kerberoasting:** Request and crack service tickets
+- **Hash cracking:** Hashcat, John the Ripper proficiency
+- **Wordlist management:** Effective password lists
+- **ASREPRoasting:** Exploit accounts without pre-auth
+- **SPN enumeration:** Finding all service accounts
+- **Targeted attacks:** Forcing SPN registration
+
+#### 2. **Access Control List (ACL) Abuse**
+- **ACL enumeration:** PowerView, BloodHound, manual LDAP queries
+- **Attack path analysis:** Finding privilege escalation chains
+- **Permission modification:** Granting yourself additional rights
+- **Password reset attacks:** ForceChangePassword right
+- **Group membership manipulation:** AddMember right
+- **Object ownership changes:** WriteOwner abuse
+- **DACL modification:** WriteDacl exploitation
+
+#### 3. **Delegation Exploitation**
+- **Unconstrained delegation discovery:** Finding vulnerable systems
+- **TGT extraction:** Capturing cached tickets
+- **Printer bug exploitation:** Forcing DC authentication
+- **Constrained delegation abuse:** S4U2Self and S4U2Proxy
+- **RBCD configuration:** Setting msDS-AllowedToActOnBehalfOfOtherIdentity
+- **Machine account creation:** Using ms-DS-MachineAccountQuota
+- **Alternative service abuse:** Accessing unintended services
+
+#### 4. **Certificate Services Exploitation**
+- **Template enumeration:** Finding vulnerable configurations
+- **Certificate request:** Specifying arbitrary subjects
+- **Certificate authentication:** Using certs with Rubeus
+- **Certificate conversion:** PEM to PFX format
+- **ESC1-ESC8 techniques:** Various ADCS attack vectors
+- **Certificate theft:** Extracting existing certificates
+
+#### 5. **Credential Harvesting**
+- **LSASS dumping:** Multiple techniques and evasion
+- **SAM database extraction:** Local account hashes
+- **NTDS.dit extraction:** Shadow copy, backup methods
+- **DPAPI credential decryption:** Master key usage
+- **Group Policy Preferences (GPP):** cPassword decryption
+- **Shadow copy enumeration:** Finding backup data
+
+#### 6. **Vulnerability Exploitation**
+- **Zerologon:** DC machine account reset
+- **PrintNightmare:** Print Spooler RCE
+- **PetitPotam:** NTLM relay coercion
+- **noPAC/sAMAccountName spoofing:** Privilege escalation
+- **MS14-068:** Kerberos PAC validation bypass
+- **CVE tracking:** Staying current with AD vulnerabilities
+
+#### 7. **Windows Service Exploitation**
+- **DNS Admin abuse:** DLL injection into dns.exe
+- **Backup Operators abuse:** SeBackupPrivilege exploitation
+- **Print Spooler abuse:** Multiple attack vectors
+- **Exchange exploitation:** WriteDacl abuse
+- **Service modification:** Changing service binaries/parameters
+- **Scheduled task abuse:** Creating privileged tasks
+
+#### 8. **Network Attacks**
+- **LLMNR/NBT-NS poisoning:** Credential interception
+- **NTLM relay:** Relaying to LDAP, SMB, HTTP
+- **IPv6 attacks:** mitm6 exploitation
+- **Responder usage:** Network credential capture
+- **SMB relay chains:** Multi-hop relay attacks
+- **WebDAV coercion:** Forcing authentication
+
+### Analytical Skills
+
+#### 1. **Attack Path Identification**
+- Reading BloodHound graphs effectively
+- Identifying shortest path to Domain Admin
+- Understanding complex permission chains
+- Recognizing valuable intermediate targets
+- Prioritizing attack vectors by likelihood
+
+#### 2. **Environment Assessment**
+- Identifying installed security controls
+- Understanding organizational structure
+- Recognizing naming conventions
+- Identifying high-value targets
+- Assessing network segmentation
+
+#### 3. **Risk vs. Reward Analysis**
+- Evaluating detection likelihood
+- Assessing technique noise levels
+- Understanding impact of actions
+- Choosing appropriate attack vectors
+- Balancing speed vs. stealth
+
+#### 4. **Defensive Understanding**
+- Recognizing detection mechanisms
+- Understanding blue team capabilities
+- Anticipating defensive responses
+- Identifying logging gaps
+- Knowing when to pivot techniques
+
+### Operational Skills
+
+#### 1. **Tool Mastery**
+- **PowerView:** Domain enumeration and ACL abuse
+- **BloodHound/SharpHound:** Attack path visualization
+- **Rubeus:** Kerberos attack tool
+- **Mimikatz:** Credential extraction and manipulation
+- **Impacket suite:** Python-based AD tools
+- **Certify:** ADCS enumeration and exploitation
+- **PowerUpSQL:** SQL Server exploitation
+- **Responder/Inveigh:** Network poisoning
+- **Custom scripts:** PowerShell and Python automation
+
+#### 2. **Enumeration Methodology**
+- Systematic domain enumeration
+- User and group enumeration
+- Computer and service discovery
+- Trust relationship mapping
+- GPO enumeration and analysis
+- Share and file discovery
+- SQL Server discovery
+
+#### 3. **Privilege Escalation Methodology**
+- Starting from low-privilege user
+- Systematic permission enumeration
+- Identifying exploitable configurations
+- Chaining multiple vulnerabilities
+- Verifying Domain Admin access
+- Documenting attack path
+
+#### 4. **Stealth & OPSEC**
+- Minimizing detection footprint
+- Using living-off-the-land techniques
+- Avoiding AV/EDR triggers
+- Timing attacks appropriately
+- Cleaning up artifacts
+- Understanding logging mechanisms
+
+---
+
+## Learning Path Recommendations
+
+### Beginner Level
+1. Understand basic AD structure and concepts
+2. Learn Kerberos and NTLM authentication fundamentals
+3. Master PowerView for enumeration
+4. Practice Kerberoasting in lab environment
+5. Learn basic ACL concepts and BloodHound usage
+6. Understand user, group, and computer objects
+
+### Intermediate Level
+1. Master ASREPRoasting techniques
+2. Learn delegation types and exploitation
+3. Practice ACL abuse and privilege escalation chains
+4. Understand GPO structure and abuse
+5. Learn NTLM relay attacks
+6. Practice credential dumping techniques
+7. Study ADCS fundamentals and attacks
+
+### Advanced Level
+1. Master RBCD attacks
+2. Learn complex ACL escalation paths
+3. Exploit ADCS misconfigurations (ESC1-ESC8)
+4. Understand and exploit trust relationships
+5. Master multiple privilege escalation techniques
+6. Learn DNSAdmins and Backup Operators abuse
+7. Practice PrintNightmare and Zerologon
+
+### Expert Level
+1. Discover novel attack techniques
+2. Chain multiple vulnerabilities
+3. Bypass advanced security controls
+4. Develop custom tools and exploits
+5. Contribute to offensive security research
+6. Teach and mentor others
+7. Understand defensive measures deeply
+
+---
+
+## Recommended Lab Practice
+
+### Lab Setup Requirements
+- **Multi-domain environment:** Parent and child domains
+- **Various Windows versions:** Mix of Server and Client OS
+- **Service accounts:** With SPNs configured
+- **Certificate Services:** ADCS deployment
+- **Security controls:** EDR, AV for evasion practice
+- **Monitoring:** SIEM for blue team perspective
+- **Snapshot capability:** Quick rollback for testing
+
+### Practice Scenarios
+
+#### 1. **Kerberoasting Mastery**
+- Enumerate all SPNs in domain
+- Request service tickets for all accounts
+- Crack weak passwords offline
+- Target specific high-value service accounts
+- Practice OPSEC-safe Kerberoasting (AES tickets)
+
+#### 2. **ASREPRoasting Practice**
+- Find accounts without pre-auth required
+- Request AS-REP responses
+- Crack extracted hashes
+- Force disable pre-auth (if write permissions)
+- Test password spray correlation
+
+#### 3. **ACL Escalation Paths**
+- Use BloodHound to find paths to DA
+- Enumerate permissions with PowerView
+- Execute multi-hop ACL abuse
+- Grant yourself DCSync rights
+- Practice stealth ACL modification
+
+#### 4. **Delegation Attacks**
+- Find unconstrained delegation systems
+- Capture TGTs with printer bug
+- Configure RBCD on target computers
+- Abuse constrained delegation
+- Practice alternative service exploitation
+
+#### 5. **ADCS Exploitation**
+- Enumerate certificate templates
+- Identify ESC1 vulnerable templates
+- Request certificates for Domain Admin
+- Convert and use certificates with Rubeus
+- Practice persistence via certificates
+
+#### 6. **Trust Exploitation**
+- Map trust relationships
+- Exploit SID History (child to parent)
+- Abuse cross-domain permissions
+- Practice inter-realm ticket forging
+- Understand trust key extraction
+
+#### 7. **Complex Attack Chains**
+- Combine Kerberoasting + password spray
+- ACL abuse to RBCD to DA
+- NTLM relay to ADCS to authentication
+- SQL link traversal to privileged host
+- Multi-technique privilege escalation
+
+---
+
+## Detection & Blue Team Awareness
+
+### Key Indicators of Compromise
+
+#### Kerberoasting Detection
+- Event ID 4769 (Kerberos Service Ticket Request) with RC4 encryption
+- Multiple TGS requests from single user in short timeframe
+- Requests for service tickets to uncommon SPNs
+- Ticket requests outside normal business hours
+
+#### ASREPRoasting Detection
+- Event ID 4768 (Kerberos TGT Request) for accounts without pre-auth
+- Multiple failed pre-authentication attempts
+- User account modifications to disable pre-auth
+
+#### ACL Abuse Detection
+- Event ID 5136 (Directory Service Object Modified)
+- Event ID 4662 (Operation performed on AD object)
+- Unusual permission changes on privileged groups
+- Modifications to msDS-AllowedToActOnBehalfOfOtherIdentity
+
+#### Delegation Abuse Detection
+- Event ID 4624 (Logon) with delegation indicators
+- Unusual systems performing DCSync (Event ID 4662)
+- New machine accounts created (Event ID 4741)
+- Changes to delegation settings
+
+#### ADCS Abuse Detection
+- Event ID 4886/4887 (Certificate request)
+- Certificate requests with unusual SANs
+- High volume of certificate enrollments
+- Enrollment from unusual users/computers
+
+### Defensive Recommendations
+- **Service Accounts:** Use gMSAs, long random passwords (30+ chars)
+- **Pre-authentication:** Ensure enabled for all accounts
+- **ACL Auditing:** Monitor permission changes on privileged objects
+- **Delegation:** Minimize unconstrained delegation, audit changes
+- **ADCS Hardening:** Fix vulnerable templates, require manager approval
+- **Monitoring:** Enable advanced audit policies, SIEM correlation
+- **Tiered Administration:** Separate privileged account tiers
+- **Least Privilege:** Minimal permissions for all accounts
+
+---

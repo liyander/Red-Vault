@@ -48,151 +48,6 @@ This document covers techniques for attacking across Active Directory forest bou
 
 ---
 
-## Skills to Develop
-
-### Technical Skills
-
-#### 1. **Network Protocol Analysis**
-- **Wireshark/tcpdump:** Capture and analyze Kerberos, LDAP, SMB traffic
-- **Understanding packet structures:** TGT, TGS, AP-REQ/AP-REP messages
-- **Cross-forest traffic patterns:** Identifying authentication flows
-- **Encrypted vs. plaintext components:** What can be observed on the wire
-
-#### 2. **Active Directory Enumeration**
-- **PowerView mastery:** Advanced domain/forest enumeration techniques
-- **BloodHound analysis:** Visualizing cross-forest attack paths
-- **LDAP querying:** Manual enumeration of trust relationships and configuration
-- **Trust relationship mapping:** Building comprehensive forest topology maps
-- **Finding delegation configurations:** Identifying unconstrained/constrained delegation
-
-#### 3. **Kerberos Ticket Manipulation**
-- **Mimikatz proficiency:** Ticket extraction, injection, and forging
-- **Rubeus expertise:** Advanced Kerberos attacks and ticket operations
-- **Impacket tools:** Remote Kerberos operations (getTGT.py, getST.py)
-- **Ticket analysis:** Understanding ticket structure and modifications
-- **Golden/Silver Ticket variations:** Inter-realm ticket forging
-
-#### 4. **SQL Server Exploitation**
-- **PowerUpSQL:** SQL Server discovery and exploitation framework
-- **Link crawling:** Automated enumeration of database link chains
-- **Privilege escalation:** From SQL user to SYSTEM
-- **Query injection:** Exploiting database links with SQL injection
-- **xp_cmdshell techniques:** Command execution and payload delivery
-
-#### 5. **Credential Harvesting**
-- **NTLM relay attacks:** Capturing and relaying authentication
-- **Responder/Inveigh:** Network poisoning across subnets
-- **DCSync operations:** Remote credential dumping
-- **LSASS dumping:** Memory extraction techniques
-- **Kerberoasting across forests:** Targeting service accounts in trusted forests
-
-#### 6. **Post-Exploitation Techniques**
-- **Lateral movement:** Moving between forests via trust relationships
-- **Persistence mechanisms:** Maintaining access across forest boundaries
-- **Privilege escalation chains:** Combining multiple vulnerabilities
-- **Stealth and OPSEC:** Avoiding detection in cross-forest operations
-
-### Analytical Skills
-
-#### 1. **Trust Relationship Analysis**
-- Identifying exploitable trust configurations
-- Understanding trust path vulnerabilities
-- Evaluating SID filtering effectiveness
-- Recognizing privilege inheritance patterns
-
-#### 2. **Attack Path Identification**
-- Building attack graphs across forests
-- Identifying pivot points and choke points
-- Evaluating multi-hop attack feasibility
-- Prioritizing targets based on access value
-
-#### 3. **Risk Assessment**
-- Evaluating forest trust security posture
-- Identifying high-value targets in trusted forests
-- Understanding blast radius of compromise
-- Assessing detection likelihood
-
-#### 4. **Defensive Thinking**
-- Understanding detection mechanisms
-- Identifying logging gaps
-- Evaluating effectiveness of security controls
-- Recommending mitigation strategies
-
-### Operational Skills
-
-#### 1. **Reconnaissance & Planning**
-- Systematic forest enumeration
-- Trust relationship discovery
-- Building comprehensive network maps
-- Identifying attack vectors
-
-#### 2. **Tool Chain Mastery**
-- PowerShell offensive frameworks
-- Python-based exploitation tools
-- C# compiled utilities (Rubeus, SharpView)
-- Linux-based attack tools (Impacket suite)
-
-#### 3. **Stealth & Evasion**
-- Minimizing detection footprint
-- Understanding EDR/AV evasion
-- Log manipulation and cleanup
-- Timing attacks to blend with normal traffic
-
-#### 4. **Documentation & Reporting**
-- Recording attack paths and evidence
-- Creating reproducible exploitation procedures
-- Documenting findings for remediation
-- Visualizing complex attack chains
-
----
-
-## Learning Path Recommendations
-
-### Beginner Level
-1. Master basic AD concepts and single-domain enumeration
-2. Understand Kerberos authentication fundamentals
-3. Learn PowerView and BloodHound basics
-4. Practice trust enumeration in lab environments
-
-### Intermediate Level
-1. Study cross-domain attacks within a single forest
-2. Learn Kerberos ticket manipulation (Golden/Silver tickets)
-3. Practice SQL Server link exploitation
-4. Understand delegation types and abuse
-
-### Advanced Level
-1. Master cross-forest trust attacks
-2. Develop custom tools and exploits
-3. Learn advanced OPSEC and evasion techniques
-4. Practice complex multi-hop attack chains
-5. Contribute to offensive security research
-
-### Expert Level
-1. Discover and exploit novel attack vectors
-2. Develop advanced persistence mechanisms
-3. Teach and mentor others
-4. Publish research and tools
-5. Contribute to defensive strategies
-
----
-
-## Recommended Lab Practice
-
-### Lab Setup Requirements
-- **Multi-forest AD environment:** Minimum 2 forests with bidirectional trust
-- **SQL Server instances:** With database links across forests
-- **Monitoring tools:** SIEM, EDR to practice detection evasion
-- **Snapshot capability:** Quick rollback for iterative testing
-
-### Practice Scenarios
-1. **Trust Ticket Forging:** Extract trust key and forge inter-realm TGT
-2. **SQL Link Traversal:** Chain through 3+ SQL servers across forests
-3. **Breaking Forest Trusts:** Full printer bug + unconstrained delegation attack
-4. **DCSync across trusts:** Grant and abuse replication permissions
-5. **Stealth operations:** Complete forest compromise with minimal detection
-
----
-
 **Understanding Forest Trusts:**
 - **Forest:** Top-level AD container; the ultimate security boundary
 - **Trust Types:** 
@@ -466,3 +321,148 @@ Detailed Articles:
 
 - [Not A Security Boundary: Breaking Forest Trusts](https://blog.harmj0y.net/redteaming/not-a-security-boundary-breaking-forest-trusts/)
 - [Hunting in Active Directory: Unconstrained Delegation & Forests Trusts](https://posts.specterops.io/hunting-in-active-directory-unconstrained-delegation-forests-trusts-71f2b33688e1)
+
+## Skills to Develop
+
+### Technical Skills
+
+#### 1. **Network Protocol Analysis**
+- **Wireshark/tcpdump:** Capture and analyze Kerberos, LDAP, SMB traffic
+- **Understanding packet structures:** TGT, TGS, AP-REQ/AP-REP messages
+- **Cross-forest traffic patterns:** Identifying authentication flows
+- **Encrypted vs. plaintext components:** What can be observed on the wire
+
+#### 2. **Active Directory Enumeration**
+- **PowerView mastery:** Advanced domain/forest enumeration techniques
+- **BloodHound analysis:** Visualizing cross-forest attack paths
+- **LDAP querying:** Manual enumeration of trust relationships and configuration
+- **Trust relationship mapping:** Building comprehensive forest topology maps
+- **Finding delegation configurations:** Identifying unconstrained/constrained delegation
+
+#### 3. **Kerberos Ticket Manipulation**
+- **Mimikatz proficiency:** Ticket extraction, injection, and forging
+- **Rubeus expertise:** Advanced Kerberos attacks and ticket operations
+- **Impacket tools:** Remote Kerberos operations (getTGT.py, getST.py)
+- **Ticket analysis:** Understanding ticket structure and modifications
+- **Golden/Silver Ticket variations:** Inter-realm ticket forging
+
+#### 4. **SQL Server Exploitation**
+- **PowerUpSQL:** SQL Server discovery and exploitation framework
+- **Link crawling:** Automated enumeration of database link chains
+- **Privilege escalation:** From SQL user to SYSTEM
+- **Query injection:** Exploiting database links with SQL injection
+- **xp_cmdshell techniques:** Command execution and payload delivery
+
+#### 5. **Credential Harvesting**
+- **NTLM relay attacks:** Capturing and relaying authentication
+- **Responder/Inveigh:** Network poisoning across subnets
+- **DCSync operations:** Remote credential dumping
+- **LSASS dumping:** Memory extraction techniques
+- **Kerberoasting across forests:** Targeting service accounts in trusted forests
+
+#### 6. **Post-Exploitation Techniques**
+- **Lateral movement:** Moving between forests via trust relationships
+- **Persistence mechanisms:** Maintaining access across forest boundaries
+- **Privilege escalation chains:** Combining multiple vulnerabilities
+- **Stealth and OPSEC:** Avoiding detection in cross-forest operations
+
+### Analytical Skills
+
+#### 1. **Trust Relationship Analysis**
+- Identifying exploitable trust configurations
+- Understanding trust path vulnerabilities
+- Evaluating SID filtering effectiveness
+- Recognizing privilege inheritance patterns
+
+#### 2. **Attack Path Identification**
+- Building attack graphs across forests
+- Identifying pivot points and choke points
+- Evaluating multi-hop attack feasibility
+- Prioritizing targets based on access value
+
+#### 3. **Risk Assessment**
+- Evaluating forest trust security posture
+- Identifying high-value targets in trusted forests
+- Understanding blast radius of compromise
+- Assessing detection likelihood
+
+#### 4. **Defensive Thinking**
+- Understanding detection mechanisms
+- Identifying logging gaps
+- Evaluating effectiveness of security controls
+- Recommending mitigation strategies
+
+### Operational Skills
+
+#### 1. **Reconnaissance & Planning**
+- Systematic forest enumeration
+- Trust relationship discovery
+- Building comprehensive network maps
+- Identifying attack vectors
+
+#### 2. **Tool Chain Mastery**
+- PowerShell offensive frameworks
+- Python-based exploitation tools
+- C# compiled utilities (Rubeus, SharpView)
+- Linux-based attack tools (Impacket suite)
+
+#### 3. **Stealth & Evasion**
+- Minimizing detection footprint
+- Understanding EDR/AV evasion
+- Log manipulation and cleanup
+- Timing attacks to blend with normal traffic
+
+#### 4. **Documentation & Reporting**
+- Recording attack paths and evidence
+- Creating reproducible exploitation procedures
+- Documenting findings for remediation
+- Visualizing complex attack chains
+
+---
+
+## Learning Path Recommendations
+
+### Beginner Level
+1. Master basic AD concepts and single-domain enumeration
+2. Understand Kerberos authentication fundamentals
+3. Learn PowerView and BloodHound basics
+4. Practice trust enumeration in lab environments
+
+### Intermediate Level
+1. Study cross-domain attacks within a single forest
+2. Learn Kerberos ticket manipulation (Golden/Silver tickets)
+3. Practice SQL Server link exploitation
+4. Understand delegation types and abuse
+
+### Advanced Level
+1. Master cross-forest trust attacks
+2. Develop custom tools and exploits
+3. Learn advanced OPSEC and evasion techniques
+4. Practice complex multi-hop attack chains
+5. Contribute to offensive security research
+
+### Expert Level
+1. Discover and exploit novel attack vectors
+2. Develop advanced persistence mechanisms
+3. Teach and mentor others
+4. Publish research and tools
+5. Contribute to defensive strategies
+
+---
+
+## Recommended Lab Practice
+
+### Lab Setup Requirements
+- **Multi-forest AD environment:** Minimum 2 forests with bidirectional trust
+- **SQL Server instances:** With database links across forests
+- **Monitoring tools:** SIEM, EDR to practice detection evasion
+- **Snapshot capability:** Quick rollback for iterative testing
+
+### Practice Scenarios
+1. **Trust Ticket Forging:** Extract trust key and forge inter-realm TGT
+2. **SQL Link Traversal:** Chain through 3+ SQL servers across forests
+3. **Breaking Forest Trusts:** Full printer bug + unconstrained delegation attack
+4. **DCSync across trusts:** Grant and abuse replication permissions
+5. **Stealth operations:** Complete forest compromise with minimal detection
+
+---

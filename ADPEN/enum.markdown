@@ -97,6 +97,321 @@ This document lists common Active Directory enumeration commands with plain-lang
 
 ---
 
+### Using PowerView
+
+[Powerview v.3.0](https://github.com/PowerShellMafia/PowerSploit/blob/master/Recon/PowerView.ps1)<br>
+[Powerview Wiki](https://powersploit.readthedocs.io/en/latest/)
+
+- **Get Current Domain:** `Get-Domain`
+  - **What:** Returns the name and basic info for the domain the current user is authenticated to.
+- **Enumerate Other Domains:** `Get-Domain -Domain <DomainName>`
+  - **What:** Queries information about a different domain (requires visibility/credentials to that domain).
+- **Get Domain SID:** `Get-DomainSID`
+  - **What:** Shows the domain SID (security identifier) used for rights/ACLs and SID history checks.
+- **Get Domain Policy:**
+
+  ```powershell
+  Get-DomainPolicy
+
+  #Will show us the policy configurations of the Domain about system access or kerberos
+  Get-DomainPolicy | Select-Object -ExpandProperty SystemAccess
+  Get-DomainPolicy | Select-Object -ExpandProperty KerberosPolicy
+  ```
+  - **What:** Dumps domain-wide Group Policy and security settings (password policies, lockout, Kerberos settings).
+
+- **Get Domain Controllers:**
+  ```powershell
+  Get-DomainController
+  Get-DomainController -Domain <DomainName>
+  ```
+  - **What:** Lists domain controllers (DCs). Useful to identify authoritative servers and targets for LDAP/NTLM interactions.
+- **Enumerate Domain Users:**
+
+  ```powershell
+  #Save all Domain Users to a file
+  Get-DomainUser | Out-File -FilePath .\DomainUsers.txt
+
+  #Will return specific properties of a specific user
+  Get-DomainUser -Identity [username] -Properties DisplayName, MemberOf | Format-List
+
+  #Enumerate user logged on a machine
+  Get-NetLoggedon -ComputerName <ComputerName>
+
+  #Enumerate Session Information for a machine
+  Get-NetSession -ComputerName <ComputerName>
+
+  #Enumerate domain machines of the current/specified domain where specific users are logged into
+  Find-DomainUserLocation -Domain <DomainName> | Select-Object UserName, SessionFromName
+  ```
+  - **What:** User enumeration and session discovery. Use to find accounts, their group membership, and where users are currently logged in (helps with lateral movement and targeting).
+
+- **Enum Domain Computers:**
+
+  ```powershell
+  Get-DomainComputer -Properties OperatingSystem, Name, DnsHostName | Sort-Object -Property DnsHostName
+
+  #Enumerate Live machines
+  Get-DomainComputer -Ping -Properties OperatingSystem, Name, DnsHostName | Sort-Object -Property DnsHostName
+  ```
+  - **What:** Lists computer objects in the domain and optionally filters to live hosts — useful to build an asset list.
+
+- **Enum Groups and Group Members:**
+
+  ```powershell
+  #Save all Domain Groups to a file:
+  Get-DomainGroup | Out-File -FilePath .\DomainGroup.txt
+
+  #Return members of Specific Group (eg. Domain Admins & Enterprise Admins)
+  Get-DomainGroup -Identity '<GroupName>' | Select-Object -ExpandProperty Member
+  Get-DomainGroupMember -Identity '<GroupName>' | Select-Object MemberDistinguishedName
+
+  #Enumerate the local groups on the local (or remote) machine. Requires local admin rights on the remote machine
+  Get-NetLocalGroup | Select-Object GroupName
+
+  #Enumerates members of a specific local group on the local (or remote) machine. Also requires local admin rights on the remote machine
+  Get-NetLocalGroupMember -GroupName Administrators | Select-Object MemberName, IsGroup, IsDomain
+
+  #Return all GPOs in a domain that modify local group memberships through Restricted Groups or Group Policy Preferences
+  Get-DomainGPOLocalGroup | Select-Object GPODisplayName, GroupName
+  ```
+  - **What:** Use these to find privileged groups and their members. Knowing group membership is crucial to identify high-privilege accounts.
+
+- **Enumerate Shares:**
+
+  ```powershell
+  #Enumerate Domain Shares
+  Find-DomainShare
+
+  #Enumerate Domain Shares the current user has access
+  Find-DomainShare -CheckShareAccess
+
+  #Enumerate "Interesting" Files on accessible shares
+  Find-InterestingDomainShareFile -Include *passwords*
+  ```
+  - **What:** Discovers SMB shares and exposed files that may contain credentials or configuration data.
+
+- **Enum Group Policies:**
+
+  ```powershell
+  Get-DomainGPO -Properties DisplayName | Sort-Object -Property DisplayName
+
+  #Enumerate all GPOs to a specific computer
+  Get-DomainGPO -ComputerIdentity <ComputerName> -Properties DisplayName | Sort-Object -Property DisplayName
+
+  #Get users that are part of a Machine's local Admin group
+  Get-DomainGPOComputerLocalGroupMapping -ComputerName <ComputerName>
+  ```
+  - **What:** GPOs often reveal automated privilege assignments, logon scripts, and other configuration that can be abused.
+
+- **Enum OUs:**
+  ```powershell
+  Get-DomainOU -Properties Name | Sort-Object -Property Name
+  ```
+  - **What:** Lists OUs (Organizational Units) to understand domain structure and where user/computer objects are organized.
+- **Enum ACLs:**
+
+  ```powershell
+  # Returns the ACLs associated with the specified account
+  Get-DomaiObjectAcl -Identity <AccountName> -ResolveGUIDs
+
+  #Search for interesting ACEs
+  Find-InterestingDomainAcl -ResolveGUIDs
+
+  #Check the ACLs associated with a specified path (e.g smb share)
+  Get-PathAcl -Path "\\Path\Of\A\Share"
+  ```
+  - **What:** ACL (Access Control List) and privilege enumeration helps find misconfigurations (e.g., write access to critical objects) that can be escalated.
+
+- **Enum Domain Trust:**
+
+  ```powershell
+  Get-DomainTrust
+  Get-DomainTrust -Domain <DomainName>
+
+  #Enumerate all trusts for the current domain and then enumerates all trusts for each domain it finds
+  Get-DomainTrustMapping
+  ```
+  - **What:** Trusts show relationships between domains/forests. Trusts can be attack paths for cross-domain escalation.
+
+- **Enum Forest Trust:**
+
+  ```powershell
+  Get-ForestDomain
+  Get-ForestDomain -Forest <ForestName>
+
+  #Map the Trust of the Forest
+  Get-ForestTrust
+  Get-ForestTrust -Forest <ForestName>
+  ```
+  - **What:** Similar to domain trusts but at the forest level; useful for large AD deployments.
+
+- **User Hunting:**
+
+  ```powershell
+  #Finds all machines on the current domain where the current user has local admin access
+  Find-LocalAdminAccess -Verbose
+
+  #Find local admins on all machines of the domain
+  Find-DomainLocalGroupMember -Verbose
+
+  #Find computers were a Domain Admin OR a specified user has a session
+  Find-DomainUserLocation | Select-Object UserName, SessionFromName
+
+  #Confirming admin access
+  Test-AdminAccess
+  ```
+  - **What:** Use these to identify where privileged accounts are actively logged in or where you already have elevated access.
+
+  :heavy_exclamation_mark: **Priv Esc to Domain Admin with User Hunting:** \
+  I have local admin access on a machine -> A Domain Admin has a session on that machine -> I steal his token and impersonate him -> Profit!
+
+### Using AD Module
+
+- **Get Current Domain:** `Get-ADDomain`
+  - **What:** Equivalent AD module call to `Get-Domain` from PowerView. Returns domain information.
+- **Enum Other Domains:** `Get-ADDomain -Identity <Domain>`
+  - **What:** Query AD domain details for a specified domain.
+- **Get Domain SID:** `Get-DomainSID`
+  - **What:** Returns the domain SID.
+- **Get Domain Controlers:**
+
+  ```powershell
+  Get-ADDomainController
+  Get-ADDomainController -Identity <DomainName>
+  ```
+  - **What:** Lists domain controllers using the AD module.
+
+- **Enumerate Domain Users:**
+
+  ```powershell
+  Get-ADUser -Filter * -Identity <user> -Properties *
+
+  #Get a specific "string" on a user's attribute
+  Get-ADUser -Filter 'Description -like "*wtver*"' -Properties Description | select Name, Description
+  ```
+  - **What:** AD module commands to list users and search attributes (e.g., finding passwords in user descriptions).
+
+- **Enum Domain Computers:**
+  ```powershell
+  Get-ADComputer -Filter * -Properties *
+  Get-ADGroup -Filter *
+  ```
+  - **What:** Lists computer and group objects using the AD module.
+- **Enum Domain Trust:**
+  ```powershell
+  Get-ADTrust -Filter *
+  Get-ADTrust -Identity <DomainName>
+  ```
+  - **What:** AD module trust enumeration.
+- **Enum Forest Trust:**
+
+  ```powershell
+  Get-ADForest
+  Get-ADForest -Identity <ForestName>
+
+  #Domains of Forest Enumeration
+  (Get-ADForest).Domains
+  ```
+  - **What:** Forest-level enumeration and domain list.
+
+- **Enum Local AppLocker Effective Policy:**
+
+  ```powershell
+  Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
+  ```
+  - **What:** Shows effective AppLocker rules on a host (can indicate application restrictions that affect payload choices).
+
+### Using BloodHound
+
+**What is BloodHound:** A tool that visualizes AD attack paths and relationships using graph theory. It collects data (users, groups, sessions, ACLs) and maps privilege escalation routes.
+
+#### Remote BloodHound
+
+[Python BloodHound Repository](https://github.com/fox-it/BloodHound.py) or install it with `pip3 install bloodhound`
+
+```powershell
+bloodhound-python -u <UserName> -p <Password> -ns <Domain Controller's Ip> -d <Domain> -c All
+```
+- **What:** Remote collector that queries LDAP/SMB to collect data into BloodHound format (use from a non-domain-joined machine).
+
+#### On Site BloodHound
+
+```powershell
+#Using exe ingestor
+.\SharpHound.exe --CollectionMethod All --LdapUsername <UserName> --LdapPassword <Password> --domain <Domain> --domaincontroller <Domain Controller's Ip> --OutputDirectory <PathToFile>
+
+#Using PowerShell module ingestor
+. .\SharpHound.ps1
+Invoke-BloodHound -CollectionMethod All --LdapUsername <UserName> --LdapPassword <Password> --OutputDirectory <PathToFile>
+```
+- **What:** Run locally in the environment to collect a wider set of high-fidelity data (sessions, ACLs, local admin mappings).
+
+### Using Adalanche
+
+**What is Adalanche:** An AD security assessment tool that automates data collection and provides a local web UI for analysis.
+
+#### Remote Adalanche
+
+```bash
+# kali linux:
+./adalanche collect activedirectory --domain <Domain> \
+--username <Username@Domain> --password <Password> \
+--server <DC>
+
+# Example:
+./adalanche collect activedirectory --domain windcorp.local \
+--username spoNge369@windcorp.local --password 'password123!' \
+--server dc.windcorp.htb
+## -> Terminating successfully
+
+## Any error?:
+
+# LDAP Result Code 200 "Network Error": x509: certificate signed by unknown authority ?
+
+./adalanche collect activedirectory --domain windcorp.local \
+--username spoNge369@windcorp.local --password 'password123!' \
+--server dc.windcorp.htb --tlsmode NoTLS --port 389
+
+# Invalid Credentials ?
+./adalanche collect activedirectory --domain windcorp.local \
+--username spoNge369@windcorp.local --password 'password123!' \
+--server dc.windcorp.htb --tlsmode NoTLS --port 389 \
+--authmode basic
+
+# Analyze data 
+# go to web browser -> 127.0.0.1:8080
+./adalanche analyze
+```
+- **What:** Collects AD data remotely and starts a local web server for interactive analysis.
+
+#### Export Enumerated Objects
+
+You can export enumerated objects from any module/cmdlet into an XML file for later analysis.
+
+The `Export-Clixml` cmdlet creates a Common Language Infrastructure (CLI) XML-based representation of an object or objects and stores it in a file. You can then use the `Import-Clixml` cmdlet to recreate the saved object based on the contents of that file.
+
+```powershell
+# Export Domain users to xml file.
+Get-DomainUser | Export-CliXml .\DomainUsers.xml
+
+# Later, when you want to utilise them for analysis even on any other machine.
+$DomainUsers = Import-CliXml .\DomainUsers.xml
+
+# You can now apply any condition, filters, etc.
+
+$DomainUsers | select name
+
+$DomainUsers | ? {$_.name -match "User's Name"}
+```
+- **What:** Export/import is useful to decouple collection from analysis or to work offline without re-running queries.
+
+### Useful Enumeration Tools
+
+- [ldapdomaindump](https://github.com/dirkjanm/ldapdomaindump) — LDAP information dumper (creates HTML reports)
+- [adidnsdump](https://github.com/dirkjanm/adidnsdump) — Dumps DNS records from AD-integrated DNS zones
+- [ACLight](https://github.com/cyberark/ACLight) — Advanced discovery of privileged accounts and shadow admins
+- [ADRecon](https://github.com/sense-of-security/ADRecon) — Detailed Active Directory reconnaissance tool (Excel/CSV output)
+
 ## Skills to Develop
 
 ### Technical Skills
@@ -418,318 +733,3 @@ This document lists common Active Directory enumeration commands with plain-lang
 ---
 
 **Remember**: Enumeration is legal and authorized during penetration tests with proper scope/authorization. Unauthorized enumeration of AD environments is illegal. Always have written permission before performing security assessments.
-
-### Using PowerView
-
-[Powerview v.3.0](https://github.com/PowerShellMafia/PowerSploit/blob/master/Recon/PowerView.ps1)<br>
-[Powerview Wiki](https://powersploit.readthedocs.io/en/latest/)
-
-- **Get Current Domain:** `Get-Domain`
-  - **What:** Returns the name and basic info for the domain the current user is authenticated to.
-- **Enumerate Other Domains:** `Get-Domain -Domain <DomainName>`
-  - **What:** Queries information about a different domain (requires visibility/credentials to that domain).
-- **Get Domain SID:** `Get-DomainSID`
-  - **What:** Shows the domain SID (security identifier) used for rights/ACLs and SID history checks.
-- **Get Domain Policy:**
-
-  ```powershell
-  Get-DomainPolicy
-
-  #Will show us the policy configurations of the Domain about system access or kerberos
-  Get-DomainPolicy | Select-Object -ExpandProperty SystemAccess
-  Get-DomainPolicy | Select-Object -ExpandProperty KerberosPolicy
-  ```
-  - **What:** Dumps domain-wide Group Policy and security settings (password policies, lockout, Kerberos settings).
-
-- **Get Domain Controllers:**
-  ```powershell
-  Get-DomainController
-  Get-DomainController -Domain <DomainName>
-  ```
-  - **What:** Lists domain controllers (DCs). Useful to identify authoritative servers and targets for LDAP/NTLM interactions.
-- **Enumerate Domain Users:**
-
-  ```powershell
-  #Save all Domain Users to a file
-  Get-DomainUser | Out-File -FilePath .\DomainUsers.txt
-
-  #Will return specific properties of a specific user
-  Get-DomainUser -Identity [username] -Properties DisplayName, MemberOf | Format-List
-
-  #Enumerate user logged on a machine
-  Get-NetLoggedon -ComputerName <ComputerName>
-
-  #Enumerate Session Information for a machine
-  Get-NetSession -ComputerName <ComputerName>
-
-  #Enumerate domain machines of the current/specified domain where specific users are logged into
-  Find-DomainUserLocation -Domain <DomainName> | Select-Object UserName, SessionFromName
-  ```
-  - **What:** User enumeration and session discovery. Use to find accounts, their group membership, and where users are currently logged in (helps with lateral movement and targeting).
-
-- **Enum Domain Computers:**
-
-  ```powershell
-  Get-DomainComputer -Properties OperatingSystem, Name, DnsHostName | Sort-Object -Property DnsHostName
-
-  #Enumerate Live machines
-  Get-DomainComputer -Ping -Properties OperatingSystem, Name, DnsHostName | Sort-Object -Property DnsHostName
-  ```
-  - **What:** Lists computer objects in the domain and optionally filters to live hosts — useful to build an asset list.
-
-- **Enum Groups and Group Members:**
-
-  ```powershell
-  #Save all Domain Groups to a file:
-  Get-DomainGroup | Out-File -FilePath .\DomainGroup.txt
-
-  #Return members of Specific Group (eg. Domain Admins & Enterprise Admins)
-  Get-DomainGroup -Identity '<GroupName>' | Select-Object -ExpandProperty Member
-  Get-DomainGroupMember -Identity '<GroupName>' | Select-Object MemberDistinguishedName
-
-  #Enumerate the local groups on the local (or remote) machine. Requires local admin rights on the remote machine
-  Get-NetLocalGroup | Select-Object GroupName
-
-  #Enumerates members of a specific local group on the local (or remote) machine. Also requires local admin rights on the remote machine
-  Get-NetLocalGroupMember -GroupName Administrators | Select-Object MemberName, IsGroup, IsDomain
-
-  #Return all GPOs in a domain that modify local group memberships through Restricted Groups or Group Policy Preferences
-  Get-DomainGPOLocalGroup | Select-Object GPODisplayName, GroupName
-  ```
-  - **What:** Use these to find privileged groups and their members. Knowing group membership is crucial to identify high-privilege accounts.
-
-- **Enumerate Shares:**
-
-  ```powershell
-  #Enumerate Domain Shares
-  Find-DomainShare
-
-  #Enumerate Domain Shares the current user has access
-  Find-DomainShare -CheckShareAccess
-
-  #Enumerate "Interesting" Files on accessible shares
-  Find-InterestingDomainShareFile -Include *passwords*
-  ```
-  - **What:** Discovers SMB shares and exposed files that may contain credentials or configuration data.
-
-- **Enum Group Policies:**
-
-  ```powershell
-  Get-DomainGPO -Properties DisplayName | Sort-Object -Property DisplayName
-
-  #Enumerate all GPOs to a specific computer
-  Get-DomainGPO -ComputerIdentity <ComputerName> -Properties DisplayName | Sort-Object -Property DisplayName
-
-  #Get users that are part of a Machine's local Admin group
-  Get-DomainGPOComputerLocalGroupMapping -ComputerName <ComputerName>
-  ```
-  - **What:** GPOs often reveal automated privilege assignments, logon scripts, and other configuration that can be abused.
-
-- **Enum OUs:**
-  ```powershell
-  Get-DomainOU -Properties Name | Sort-Object -Property Name
-  ```
-  - **What:** Lists OUs (Organizational Units) to understand domain structure and where user/computer objects are organized.
-- **Enum ACLs:**
-
-  ```powershell
-  # Returns the ACLs associated with the specified account
-  Get-DomaiObjectAcl -Identity <AccountName> -ResolveGUIDs
-
-  #Search for interesting ACEs
-  Find-InterestingDomainAcl -ResolveGUIDs
-
-  #Check the ACLs associated with a specified path (e.g smb share)
-  Get-PathAcl -Path "\\Path\Of\A\Share"
-  ```
-  - **What:** ACL (Access Control List) and privilege enumeration helps find misconfigurations (e.g., write access to critical objects) that can be escalated.
-
-- **Enum Domain Trust:**
-
-  ```powershell
-  Get-DomainTrust
-  Get-DomainTrust -Domain <DomainName>
-
-  #Enumerate all trusts for the current domain and then enumerates all trusts for each domain it finds
-  Get-DomainTrustMapping
-  ```
-  - **What:** Trusts show relationships between domains/forests. Trusts can be attack paths for cross-domain escalation.
-
-- **Enum Forest Trust:**
-
-  ```powershell
-  Get-ForestDomain
-  Get-ForestDomain -Forest <ForestName>
-
-  #Map the Trust of the Forest
-  Get-ForestTrust
-  Get-ForestTrust -Forest <ForestName>
-  ```
-  - **What:** Similar to domain trusts but at the forest level; useful for large AD deployments.
-
-- **User Hunting:**
-
-  ```powershell
-  #Finds all machines on the current domain where the current user has local admin access
-  Find-LocalAdminAccess -Verbose
-
-  #Find local admins on all machines of the domain
-  Find-DomainLocalGroupMember -Verbose
-
-  #Find computers were a Domain Admin OR a specified user has a session
-  Find-DomainUserLocation | Select-Object UserName, SessionFromName
-
-  #Confirming admin access
-  Test-AdminAccess
-  ```
-  - **What:** Use these to identify where privileged accounts are actively logged in or where you already have elevated access.
-
-  :heavy_exclamation_mark: **Priv Esc to Domain Admin with User Hunting:** \
-  I have local admin access on a machine -> A Domain Admin has a session on that machine -> I steal his token and impersonate him -> Profit!
-
-### Using AD Module
-
-- **Get Current Domain:** `Get-ADDomain`
-  - **What:** Equivalent AD module call to `Get-Domain` from PowerView. Returns domain information.
-- **Enum Other Domains:** `Get-ADDomain -Identity <Domain>`
-  - **What:** Query AD domain details for a specified domain.
-- **Get Domain SID:** `Get-DomainSID`
-  - **What:** Returns the domain SID.
-- **Get Domain Controlers:**
-
-  ```powershell
-  Get-ADDomainController
-  Get-ADDomainController -Identity <DomainName>
-  ```
-  - **What:** Lists domain controllers using the AD module.
-
-- **Enumerate Domain Users:**
-
-  ```powershell
-  Get-ADUser -Filter * -Identity <user> -Properties *
-
-  #Get a specific "string" on a user's attribute
-  Get-ADUser -Filter 'Description -like "*wtver*"' -Properties Description | select Name, Description
-  ```
-  - **What:** AD module commands to list users and search attributes (e.g., finding passwords in user descriptions).
-
-- **Enum Domain Computers:**
-  ```powershell
-  Get-ADComputer -Filter * -Properties *
-  Get-ADGroup -Filter *
-  ```
-  - **What:** Lists computer and group objects using the AD module.
-- **Enum Domain Trust:**
-  ```powershell
-  Get-ADTrust -Filter *
-  Get-ADTrust -Identity <DomainName>
-  ```
-  - **What:** AD module trust enumeration.
-- **Enum Forest Trust:**
-
-  ```powershell
-  Get-ADForest
-  Get-ADForest -Identity <ForestName>
-
-  #Domains of Forest Enumeration
-  (Get-ADForest).Domains
-  ```
-  - **What:** Forest-level enumeration and domain list.
-
-- **Enum Local AppLocker Effective Policy:**
-
-  ```powershell
-  Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
-  ```
-  - **What:** Shows effective AppLocker rules on a host (can indicate application restrictions that affect payload choices).
-
-### Using BloodHound
-
-**What is BloodHound:** A tool that visualizes AD attack paths and relationships using graph theory. It collects data (users, groups, sessions, ACLs) and maps privilege escalation routes.
-
-#### Remote BloodHound
-
-[Python BloodHound Repository](https://github.com/fox-it/BloodHound.py) or install it with `pip3 install bloodhound`
-
-```powershell
-bloodhound-python -u <UserName> -p <Password> -ns <Domain Controller's Ip> -d <Domain> -c All
-```
-- **What:** Remote collector that queries LDAP/SMB to collect data into BloodHound format (use from a non-domain-joined machine).
-
-#### On Site BloodHound
-
-```powershell
-#Using exe ingestor
-.\SharpHound.exe --CollectionMethod All --LdapUsername <UserName> --LdapPassword <Password> --domain <Domain> --domaincontroller <Domain Controller's Ip> --OutputDirectory <PathToFile>
-
-#Using PowerShell module ingestor
-. .\SharpHound.ps1
-Invoke-BloodHound -CollectionMethod All --LdapUsername <UserName> --LdapPassword <Password> --OutputDirectory <PathToFile>
-```
-- **What:** Run locally in the environment to collect a wider set of high-fidelity data (sessions, ACLs, local admin mappings).
-
-### Using Adalanche
-
-**What is Adalanche:** An AD security assessment tool that automates data collection and provides a local web UI for analysis.
-
-#### Remote Adalanche
-
-```bash
-# kali linux:
-./adalanche collect activedirectory --domain <Domain> \
---username <Username@Domain> --password <Password> \
---server <DC>
-
-# Example:
-./adalanche collect activedirectory --domain windcorp.local \
---username spoNge369@windcorp.local --password 'password123!' \
---server dc.windcorp.htb
-## -> Terminating successfully
-
-## Any error?:
-
-# LDAP Result Code 200 "Network Error": x509: certificate signed by unknown authority ?
-
-./adalanche collect activedirectory --domain windcorp.local \
---username spoNge369@windcorp.local --password 'password123!' \
---server dc.windcorp.htb --tlsmode NoTLS --port 389
-
-# Invalid Credentials ?
-./adalanche collect activedirectory --domain windcorp.local \
---username spoNge369@windcorp.local --password 'password123!' \
---server dc.windcorp.htb --tlsmode NoTLS --port 389 \
---authmode basic
-
-# Analyze data 
-# go to web browser -> 127.0.0.1:8080
-./adalanche analyze
-```
-- **What:** Collects AD data remotely and starts a local web server for interactive analysis.
-
-#### Export Enumerated Objects
-
-You can export enumerated objects from any module/cmdlet into an XML file for later analysis.
-
-The `Export-Clixml` cmdlet creates a Common Language Infrastructure (CLI) XML-based representation of an object or objects and stores it in a file. You can then use the `Import-Clixml` cmdlet to recreate the saved object based on the contents of that file.
-
-```powershell
-# Export Domain users to xml file.
-Get-DomainUser | Export-CliXml .\DomainUsers.xml
-
-# Later, when you want to utilise them for analysis even on any other machine.
-$DomainUsers = Import-CliXml .\DomainUsers.xml
-
-# You can now apply any condition, filters, etc.
-
-$DomainUsers | select name
-
-$DomainUsers | ? {$_.name -match "User's Name"}
-```
-- **What:** Export/import is useful to decouple collection from analysis or to work offline without re-running queries.
-
-### Useful Enumeration Tools
-
-- [ldapdomaindump](https://github.com/dirkjanm/ldapdomaindump) — LDAP information dumper (creates HTML reports)
-- [adidnsdump](https://github.com/dirkjanm/adidnsdump) — Dumps DNS records from AD-integrated DNS zones
-- [ACLight](https://github.com/cyberark/ACLight) — Advanced discovery of privileged accounts and shadow admins
-- [ADRecon](https://github.com/sense-of-security/ADRecon) — Detailed Active Directory reconnaissance tool (Excel/CSV output)
