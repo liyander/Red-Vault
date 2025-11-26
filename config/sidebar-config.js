@@ -16,15 +16,19 @@ const SIDEBAR_CONFIG = [
         path: "Active-Directory/Active_Directory.markdown"
     },
     {
+        title: "Red Team checklist",
+        path:"RedCheck/Red_Teaming_Checklist.md"
+    },
+    {
         title: "Reconnaissance",
         path: "ADPEN/recon.markdown"
     },
     {
-        title:"Enumeration",
+        title:"AD - Enumeration",
         path: "ADPEN/enum.markdown"
     },
     {
-        title: "Gaining initail access",
+        title: "AD - Gaining initail access",
         path: "ADPEN/initial_access.markdown"
     },
     {
@@ -40,16 +44,24 @@ const SIDEBAR_CONFIG = [
         path: "ADPEN/windows_privilege_escalation.markdown"
     },
     {
-        title: "Lateral Movement",
+        title: "Domain Privilege Escalation",
+        path: "Domain-prev/domain_prev_esc.md"
+    },
+    {
+        title: "AD - Lateral Movement",
         path: "ADPEN/lateral_movement.markdown"
     },
     {
-        title: "Persistence",
+        title: "AD - Persistence",
         path: "ADPEN/persistence.markdown"
     },
     {
         title: "Data Exfiltration",
         path: "ADPEN/data_exfiltration.markdown"
+    },
+    {
+        title: "AD - Cross Forest Attacks",
+        path: "cross-forest/cross_forest_attacks.md"
     },
     {
         title: "Certipy AD",

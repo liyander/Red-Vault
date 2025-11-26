@@ -1,4 +1,4 @@
-# Reconnaissance in Active Directory Penetration Testing
+# Reconnaissance 
 
 ## Overview
 Reconnaissance is the initial phase of AD penetration testing, focusing on gathering information about the target environment without direct interaction (passive) or with minimal interaction (active, if permitted). The goal is to identify domain names, network infrastructure, user details, and potential entry points for subsequent attacks.
